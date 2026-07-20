@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chaturvedi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.3/math.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#0E0E10;
+  --bg-elevated:#18181B;
+  --bg-elevated-2:#202024;
+  --text:#ECEAE4;
+  --text-secondary:#A6A3A0;
+  --text-tertiary:#6E6B68;
+  --accent:#7376E8;
+  --accent-soft:rgba(115,118,232,0.14);
+  --border:rgba(255,255,255,0.08);
+  --shadow:0 20px 60px rgba(0,0,0,0.45);
+  --serif:'Instrument Serif',Georgia,serif;
+  --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+}
+[data-theme="light"]{
+  --bg:#FAFAF8;
+  --bg-elevated:#F1F0EC;
+  --bg-elevated-2:#E7E5DF;
+  --text:#18181A;
+  --text-secondary:#5B5955;
+  --text-tertiary:#8B8884;
+  --accent:#5457C7;
+  --accent-soft:rgba(84,87,199,0.10);
+  --border:rgba(0,0,0,0.08);
+  --shadow:0 20px 60px rgba(0,0,0,0.12);
+}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+button{font-family:inherit}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;position:relative}
+
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 10px;flex-shrink:0}
+.wordmark{font-family:var(--serif);font-size:23px;letter-spacing:-0.01em;display:flex;align-items:center;gap:9px;user-select:none}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:var(--text-tertiary);transition:background .4s,box-shadow .4s}
+.sync-dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.icon-btn{background:none;border:none;color:var(--text-secondary);cursor:pointer;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;flex-shrink:0}
+.icon-btn:hover{background:var(--bg-elevated);color:var(--text)}
+.icon-btn svg{width:17px;height:17px}
+
+#stream{flex:1;overflow-y:auto;padding:10px 26px 28px;display:flex;flex-direction:column;gap:22px;max-width:680px;width:100%;margin:0 auto;scroll-behavior:smooth}
+#stream::-webkit-scrollbar{width:6px}
+#stream::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.msg{animation:rise .3s ease}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.msg.user{align-self:flex-end;background:var(--bg-elevated);border-radius:17px 17px 4px 17px;padding:11px 16px;font-size:14.5px;line-height:1.55;max-width:82%;white-space:pre-wrap;word-break:break-word}
+
+.msg.assistant{font-size:15.5px;line-height:1.72;max-width:100%}
+.msg.assistant p{margin:0 0 0.75em}
+.msg.assistant p:last-child{margin-bottom:0}
+.msg.assistant h1,.msg.assistant h2,.msg.assistant h3{font-size:1.08em;font-weight:600;margin:1em 0 .4em;color:var(--text)}
+.msg.assistant h1:first-child,.msg.assistant h2:first-child,.msg.assistant h3:first-child{margin-top:0}
+.msg.assistant ul,.msg.assistant ol{margin:.4em 0;padding-left:1.3em}
+.msg.assistant li{margin:.22em 0}
+.msg.assistant strong{font-weight:600;color:var(--text)}
+.msg.assistant em{color:var(--text-secondary)}
+.msg.assistant code{background:var(--bg-elevated);padding:2px 6px;border-radius:5px;font-size:.87em;font-family:var(--mono)}
+.msg.assistant pre{background:var(--bg-elevated);border:1px solid var(--border);border-radius:12px;padding:15px 17px;overflow-x:auto;position:relative;margin:.65em 0}
+.msg.assistant pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+.msg.assistant blockquote{border-left:2px solid var(--border);padding-left:12px;color:var(--text-secondary);margin:.5em 0}
+.msg.assistant table{border-collapse:collapse;width:100%;margin:.5em 0;font-size:13.5px}
+.msg.assistant th,.msg.assistant td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+.msg.assistant th{color:var(--text-secondary);font-weight:600}
+.msg.assistant a{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.copy-btn{position:absolute;top:9px;right:11px;background:var(--bg);border:1px solid var(--border);color:var(--text-tertiary);font-size:10.5px;padding:3px 9px;border-radius:6px;cursor:pointer;opacity:0;transition:opacity .2s}
+.msg.assistant pre:hover .copy-btn{opacity:1}
+
+.msg.quick{font-family:var(--mono);font-size:13.5px;color:var(--text-tertiary);letter-spacing:.02em}
+
+.msg.thinking{display:flex;gap:5px;padding:6px 0}
+.msg.thinking .d{width:6px;height:6px;border-radius:50%;background:var(--text-tertiary);animation:tb 1.2s infinite}
+.msg.thinking .d:nth-child(2){animation-delay:.2s}
+.msg.thinking .d:nth-child(3){animation-delay:.4s}
+@keyframes tb{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+.msg.system-note{font-size:13px;color:var(--text-tertiary);font-style:italic}
+
+.image-card{max-width:420px}
+.image-frame{position:relative;border-radius:16px;overflow:hidden;background:var(--bg-elevated);min-height:180px;display:flex;align-items:center;justify-content:center;cursor:zoom-in}
+.image-frame img{width:100%;display:block}
+.spinner{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--accent);animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.image-caption{font-size:12px;color:var(--text-tertiary);margin-top:7px;line-height:1.5}
+.image-download{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.55);color:#fff;border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;opacity:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center}
+.image-frame:hover .image-download{opacity:1}
+.image-download svg{width:14px;height:14px}
+.image-error{padding:22px;font-size:13px;color:var(--text-secondary);text-align:center;line-height:1.6}
+
+.attach-row{display:flex;gap:6px;flex-wrap:wrap;max-width:680px;margin:0 auto;padding:0 26px 6px;width:100%}
+.attach-chip{display:flex;align-items:center;gap:7px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:12px;color:var(--text-secondary)}
+.attach-remove{background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:14px;line-height:1;padding:0}
+
+#inputBar{display:flex;align-items:flex-end;gap:4px;max-width:680px;width:calc(100% - 52px);margin:0 auto;background:var(--bg-elevated);border:1px solid var(--border);border-radius:27px;padding:7px 7px 7px 15px;flex-shrink:0;transition:border-color .2s}
+#inputBar:focus-within{border-color:var(--accent)}
+#composer{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--sans);font-size:15px;resize:none;max-height:150px;line-height:1.5;padding:7px 4px}
+#composer::placeholder{color:var(--text-tertiary)}
+#composer:disabled{opacity:.5}
+
+.orb{width:36px;height:36px;border-radius:50%;border:none;position:relative;background:transparent;cursor:pointer;flex-shrink:0}
+.orb::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--text-tertiary);opacity:.4;transition:background .35s,opacity .35s}
+.orb.idle::before{animation:breathe 4.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.32;transform:scale(.88)}50%{opacity:.58;transform:scale(1)}}
+.orb.listening::before{background:var(--accent);opacity:.9;animation:fast 1s ease-in-out infinite}
+@keyframes fast{0%,100%{transform:scale(.82)}50%{transform:scale(1.18)}}
+.orb.thinking::before{background:var(--accent);opacity:.65;animation:spin 1.8s linear infinite}
+@keyframes spin{from{transform:rotate(0) scale(1)}to{transform:rotate(360deg) scale(1)}}
+.orb.speaking::before{background:var(--accent);opacity:.85;animation:fast .55s ease-in-out infinite}
+.orb:hover::before{opacity:.7}
+
+.send{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg-elevated-2);color:var(--text-tertiary);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,color .2s,transform .15s}
+.send svg{width:15px;height:15px}
+.send.active{background:var(--accent);color:#fff}
+.send.active:hover{transform:scale(1.06)}
+.send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.hint{text-align:center;font-size:10.5px;color:var(--text-tertiary);padding:10px 0 16px;flex-shrink:0;letter-spacing:.01em}
+
+.sheet{position:fixed;background:var(--bg-elevated);border:1px solid var(--border);border-radius:15px;padding:6px;min-width:210px;box-shadow:var(--shadow);z-index:60;animation:pop .18s ease}
+@keyframes pop{from{opacity:0;transform:scale(.97) translateY(-4px)}to{opacity:1;transform:none}}
+#menuPanel{top:66px;right:22px}
+.sheet-item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:10px;font-size:13.5px;color:var(--text);cursor:pointer}
+.sheet-item:hover{background:var(--bg)}
+.sheet-item .val{color:var(--text-tertiary);font-size:12px}
+.sheet-div{height:1px;background:var(--border);margin:6px 5px}
+
+#aboutPanel{top:50%;left:50%;transform:translate(-50%,-50%);max-width:300px;padding:28px 26px;text-align:center}
+.about-title{font-family:var(--serif);font-size:24px;margin-bottom:4px}
+.about-by{font-size:11.5px;color:var(--text-tertiary);margin-bottom:18px;letter-spacing:.02em}
+#aboutPanel p{font-size:12.5px;color:var(--text-secondary);line-height:1.65;margin:0 0 20px}
+.close-about{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 20px;color:var(--text);font-size:13px;cursor:pointer}
+.close-about:hover{border-color:var(--accent)}
+
+#overlay{position:fixed;inset:0;background:transparent;z-index:55;display:none}
+#overlay.on{display:block}
+
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px)}
+#lightbox.on{display:flex}
+#lightbox img{max-width:90vw;max-height:90vh;border-radius:14px;box-shadow:0 0 80px rgba(0,0,0,.8)}
+#lightboxClose{position:fixed;top:20px;right:22px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#lightboxClose:hover{background:rgba(255,0,0,.25)}
+
+@media(max-width:640px){
+  header{padding:16px 18px 8px}
+  .wordmark{font-size:20px}
+  #stream{padding:8px 18px 16px;gap:18px}
+  .msg.user{max-width:88%}
+  .image-card{max-width:100%}
+  #inputBar{width:calc(100% - 36px)}
+  #menuPanel{right:16px;top:60px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="wordmark">Chaturvedi<span class="sync-dot" id="syncDot"></span></div>
+    <button class="icon-btn" id="moreBtn" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+    </button>
+  </header>
+
+  <main id="stream"></main>
+
+  <div class="attach-row" id="attachRow" hidden></div>
+
+  <div id="inputBar">
+    <button class="icon-btn" id="attachBtn" aria-label="Attach file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.5l-8.5 8.5a4.95 4.95 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
+    </button>
+    <textarea id="composer" rows="1" placeholder="Message Chaturvedi" autocomplete="off" spellcheck="false"></textarea>
+    <button class="orb idle" id="orbBtn" aria-label="Voice"></button>
+    <button class="send" id="sendBtn" aria-label="Send" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+    <input type="file" id="fileInput" hidden multiple accept="image/*,.txt,.md,.js,.ts,.py,.json,.csv,.html,.css,.java,.cpp,.c,.rs,.go,.rb,.php,.sql,.sh">
+  </div>
+  <div class="hint">Chaturvedi can make mistakes. Check important information.</div>
+</div>
+
+<div id="overlay"></div>
+
+<div class="sheet" id="menuPanel" hidden>
+  <div class="sheet-item" id="newChatItem"><span>New chat</span></div>
+  <div class="sheet-item" id="exportItem"><span>Export conversation</span></div>
+  <div class="sheet-div"></div>
+  <div class="sheet-item" id="voiceItem"><span>Voice replies</span><span class="val" id="voiceLabel">On</span></div>
+  <div class="sheet-item" id="themeItem"><span>Appearance</span><span class="val" id="themeLabel">Dark</span></div>
+  <div class="sheet-div"></div>
+  <div class="sheet-item" id="aboutItem"><span>About Chaturvedi</span></div>
+</div>
+
+<div class="sheet" id="aboutPanel" hidden>
+  <div class="about-title">Chaturvedi</div>
+  <div class="about-by">A personal AI, built by Raunak Chaturvedi</div>
+  <p>Chaturvedi can make mistakes. Always verify anything important, and don't treat its answers as medical, legal, or financial advice.</p>
+  <button class="close-about" id="aboutClose">Close</button>
+</div>
+
+<div id="lightbox">
+  <img id="lightboxImg" src="" alt="">
+  <button id="lightboxClose">✕</button>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
