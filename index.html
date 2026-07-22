@@ -144,6 +144,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .about-title{font-family:var(--serif);font-size:24px;margin-bottom:4px}
 .about-by{font-size:11.5px;color:var(--text-tertiary);margin-bottom:18px;letter-spacing:.02em}
 #aboutPanel p{font-size:12.5px;color:var(--text-secondary);line-height:1.65;margin:0 0 20px}
+
+#personalizePanel{top:50%;left:50%;transform:translate(-50%,-50%);max-width:360px;padding:26px}
+#personalizePanel .about-title{margin-bottom:8px}
+.personalize-hint{font-size:12px;color:var(--text-secondary);line-height:1.6;margin:0 0 14px;text-align:left}
+#personalizeInput{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:11px 13px;color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.55;resize:vertical;min-height:90px;outline:none;margin-bottom:14px}
+#personalizeInput:focus{border-color:var(--accent)}
+.personalize-actions{display:flex;gap:8px;justify-content:center}
+.save-personalize{background:var(--accent);border:none;border-radius:10px;padding:8px 20px;color:#fff;font-size:13px;cursor:pointer}
+.save-personalize:hover{opacity:.9}
 .close-about{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 20px;color:var(--text);font-size:13px;cursor:pointer}
 .close-about:hover{border-color:var(--accent)}
 
@@ -202,6 +211,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 <div class="sheet" id="menuPanel" hidden>
   <div class="sheet-item" id="newChatItem"><span>New chat</span></div>
   <div class="sheet-item" id="exportItem"><span>Export conversation</span></div>
+  <div class="sheet-item" id="personalizeItem"><span>Personalize</span></div>
   <div class="sheet-div"></div>
   <div class="sheet-item" id="voiceItem"><span>Voice replies</span><span class="val" id="voiceLabel">On</span></div>
   <div class="sheet-item" id="themeItem"><span>Appearance</span><span class="val" id="themeLabel">Dark</span></div>
@@ -214,6 +224,16 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
   <div class="about-by">A personal AI, built by Raunak Chaturvedi</div>
   <p>Chaturvedi can make mistakes. Always verify anything important, and don't treat its answers as medical, legal, or financial advice.</p>
   <button class="close-about" id="aboutClose">Close</button>
+</div>
+
+<div class="sheet" id="personalizePanel" hidden>
+  <div class="about-title">Personalize</div>
+  <p class="personalize-hint">Tell Chaturvedi a little about yourself — your name, what you do, how you like answers. It'll shape every conversation from here on, quietly.</p>
+  <textarea id="personalizeInput" placeholder="e.g. I'm a developer. Keep answers direct, skip the fluff, and use Python examples when relevant."></textarea>
+  <div class="personalize-actions">
+    <button class="save-personalize" id="personalizeSave">Save</button>
+    <button class="close-about" id="personalizeClose">Close</button>
+  </div>
 </div>
 
 <div id="lightbox">
@@ -256,6 +276,7 @@ let recognition = null;
 let pendingAttachments = [];
 let sbClient = null;
 let sbReady = false;
+let personalization = '';
 
 /* ══════════════════════════════════════════════════════════
    BACKEND CALLS — the only network calls that carry secrets
@@ -297,23 +318,60 @@ async function liveContext(text) {
 const LIVE_PATTERN = /\b(latest|current|currently|today|right now|this week|this month|this year|2025|2026|price of|stock price|score|who won|scores|standings|breaking news|news about|weather in)\b/i;
 
 /* ══════════════════════════════════════════════════════════
-   QUICK MATH — instant compute for clean expressions
+   INSTANT COMPUTATION — math.js runs silently before the model
+   answers. No "math mode", it just recognizes clean expressions.
    ══════════════════════════════════════════════════════════ */
 function quickMath(text) {
+  if (!window.math) return null;
   const t = text.trim();
-  if (t.length > 50) return null;
+  if (t.length > 80) return null;
+
+  const deriv = t.match(/^(?:derivative of|differentiate|d\/dx of)\s+(.+?)(?:\s+with respect to\s+([a-z]))?$/i);
+  if (deriv) {
+    try {
+      const varName = deriv[2] || 'x';
+      const d = math.derivative(deriv[1].replace(/\^/g, '**'), varName);
+      return { label: 'd/d' + varName + '[' + deriv[1] + ']', value: d.toString() };
+    } catch (e) {}
+  }
+
+  const simp = t.match(/^simplify\s+(.+)$/i);
+  if (simp) {
+    try {
+      return { label: 'simplify(' + simp[1] + ')', value: math.simplify(simp[1].replace(/\^/g, '**')).toString() };
+    } catch (e) {}
+  }
+
   if (!/\d/.test(t)) return null;
   if (!/[+\-*/^%]/.test(t) && !/^(what is|calculate|compute)/i.test(t)) return null;
   if (!/^[\d\s+\-*/^().,%a-zA-Z]+\??$/.test(t)) return null;
-  if (!window.math) return null;
   try {
     const cleaned = t.replace(/^(what is|calculate|compute|solve)\s*/i, '').replace(/\^/g, '**').replace(/\?\s*$/, '');
     const val = math.evaluate(cleaned);
     if (typeof val === 'number' && isFinite(val)) {
-      return Number.isInteger(val) ? String(val) : String(Number(val.toPrecision(10)));
+      const shown = Number.isInteger(val) ? String(val) : String(Number(val.toPrecision(10)));
+      return { label: cleaned, value: shown };
     }
   } catch (e) {}
   return null;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DOMAIN DETECTION — invisible. No math/physics "mode", no
+   tab, no toggle. The system just recognizes what's being
+   asked and asks the model to bring the right rigor.
+   ══════════════════════════════════════════════════════════ */
+const MATH_HINT_PATTERN = /\b(derivative|integral|integrate|differentiate|equation|solve for|matrix|eigenvalue|probability|theorem|prove|calculus|polynomial|logarithm|vector space|combinatorics|series converge)\b/i;
+const PHYSICS_HINT_PATTERN = /\b(velocity|acceleration|force|newton|joule|energy|momentum|quantum|relativity|thermodynamic|electric field|magnetic field|wavelength|frequency|kinetic energy|potential energy|gravity|orbit|voltage|circuit|entropy)\b/i;
+
+function domainHint(text) {
+  if (MATH_HINT_PATTERN.test(text)) {
+    return "\n\nThis is a rigorous math question. Show the full derivation step by step, don't skip algebra. State the final answer clearly, then verify it (substitute back, check a limiting case, or a sanity check). Briefly explain the intuition.";
+  }
+  if (PHYSICS_HINT_PATTERN.test(text)) {
+    return "\n\nThis is a physics question. State what's given and what's being found, list the governing equations, show every step with units attached (dimensional consistency matters), give the final answer with correct units and significant figures, and note the physical intuition or any simplifying assumptions.";
+  }
+  return '';
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -324,28 +382,47 @@ const IMAGE_PATTERN = /\b(draw|sketch|generate (an|a) image( of)?|create (an|a) 
 
 function isImageIntent(text) { return IMAGE_PATTERN.test(text); }
 
-function buildImageUrl(text) {
+async function enhanceImagePrompt(text) {
   const clean = text.replace(IMAGE_PATTERN, '').replace(/^\s*of\s+/i, '').trim() || text;
-  const enhanced = clean + ', highly detailed, beautiful lighting, professional quality';
+  try {
+    const enhanced = await askAI([
+      { role: 'system', content: 'Turn a short image request into one vivid, detailed prompt for an image model. Add composition, lighting, and mood detail. Reply with only the improved prompt, nothing else, under 60 words.' },
+      { role: 'user', content: clean }
+    ]);
+    if (enhanced && enhanced.trim().length > 5) return enhanced.trim();
+  } catch (e) {}
+  return clean + ', highly detailed, beautiful lighting, professional quality';
+}
+
+function buildImageUrl(originalText, enhancedPrompt) {
   let w = 1024, h = 1024;
-  if (/\b(wide|landscape|panoramic)\b/i.test(text)) { w = 1344; h = 768; }
-  else if (/\b(tall|portrait|vertical)\b/i.test(text)) { w = 768; h = 1344; }
+  if (/\b(wide|landscape|panoramic)\b/i.test(originalText)) { w = 1344; h = 768; }
+  else if (/\b(tall|portrait|vertical)\b/i.test(originalText)) { w = 768; h = 1344; }
   const seed = Math.floor(Math.random() * 1000000);
-  const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(enhanced)
+  const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(enhancedPrompt)
     + '?width=' + w + '&height=' + h + '&seed=' + seed + '&model=flux&nologo=true';
-  return { url: url, clean: clean, seed: seed };
+  return { url: url, seed: seed };
 }
 
 /* ══════════════════════════════════════════════════════════
-   SYSTEM PROMPT — sent to backend, backend forwards to model
+   SYSTEM PROMPT — sent to backend, backend forwards to model.
+   Folds in domain rigor and personalization invisibly —
+   no separate modes, no visible switches.
    ══════════════════════════════════════════════════════════ */
-function systemPrompt() {
+function systemPrompt(messageText) {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  return "You are Chaturvedi, a personal AI assistant created by Raunak Chaturvedi. If asked who made you or who you belong to, say Raunak Chaturvedi built you \u2014 never mention any other company. Address the person as \"buddy\" naturally, not in every sentence.\n\n"
+  let prompt = "You are Chaturvedi, a personal AI assistant created by Raunak Chaturvedi. If asked who made you or who you belong to, say Raunak Chaturvedi built you \u2014 never mention any other company. Address the person as \"buddy\" naturally, not in every sentence.\n\n"
     + "Be direct and genuinely useful. Match your depth to the question \u2014 thorough when it matters, brief when it doesn't. Use markdown formatting (headings, lists, code blocks) only when it actually helps comprehension. If you're unsure about something, say so plainly rather than guessing confidently.\n\n"
+    + "You have real depth in mathematics and physics \u2014 when a question calls for it, show full working, not just a final answer.\n\n"
     + "For medical, legal, or financial questions, give useful information but note you're not a licensed professional.\n\n"
     + "Today is " + dateStr + ".";
+
+  if (messageText) prompt += domainHint(messageText);
+  if (personalization && personalization.trim()) {
+    prompt += "\n\nWhat you know about the person you're talking to (use it naturally, don't just repeat it back at them): " + personalization.trim();
+  }
+  return prompt;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -400,9 +477,9 @@ function addAssistantMessage(markdown) {
   scrollToEnd();
   return wrap;
 }
-function addQuickAnswer(value) {
+function addQuickAnswer(text) {
   const stream = document.getElementById('stream');
-  const wrap = el('div', 'msg quick', '= ' + escapeHtml(value));
+  const wrap = el('div', 'msg quick', escapeHtml(text));
   stream.appendChild(wrap);
   scrollToEnd();
 }
@@ -662,12 +739,15 @@ async function sendMessage(rawText) {
   renderAttachRow();
 
   if (isImageIntent(text) && !attachedNow.length) {
-    const built = buildImageUrl(text);
-    const card = addImageCard(built.clean);
-    fillImageCard(card, built.url, built.clean);
-    const note = '[Generated an image: ' + built.clean + ']';
+    const card = addImageCard(text.length > 60 ? text.slice(0, 60) + '\u2026' : text);
+    setOrbState('thinking');
+    const enhancedPrompt = await enhanceImagePrompt(text);
+    const built = buildImageUrl(text, enhancedPrompt);
+    fillImageCard(card, built.url, enhancedPrompt);
+    const note = '[Generated an image: ' + enhancedPrompt.slice(0, 80) + ']';
     history.push({ role: 'assistant', content: note });
     persistTurn('assistant', note);
+    setOrbState('idle');
     if (voiceOn) speak('Here\u2019s your image, buddy.');
     busy = false;
     updateComposerState();
@@ -680,7 +760,7 @@ async function sendMessage(rawText) {
   let liveCtx = '';
   try { liveCtx = await liveContext(text); } catch (e) {}
   const mathAns = quickMath(text);
-  if (mathAns) addQuickAnswer(mathAns);
+  if (mathAns) addQuickAnswer(mathAns.label + ' = ' + mathAns.value);
 
   const attachCtx = attachmentContext();
 
@@ -688,7 +768,7 @@ async function sendMessage(rawText) {
   if (apiHistory.length) {
     apiHistory[apiHistory.length - 1] = { role: 'user', content: text + liveCtx + attachCtx };
   }
-  const msgs = [{ role: 'system', content: systemPrompt() }].concat(apiHistory);
+  const msgs = [{ role: 'system', content: systemPrompt(text) }].concat(apiHistory);
 
   let reply;
   try {
@@ -826,6 +906,46 @@ function closeAbout() {
   document.getElementById('overlay').classList.remove('on');
 }
 
+function openPersonalize() {
+  closeMenu();
+  document.getElementById('personalizeInput').value = personalization;
+  document.getElementById('personalizePanel').hidden = false;
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('personalizeInput').focus();
+}
+function closePersonalize() {
+  document.getElementById('personalizePanel').hidden = true;
+  document.getElementById('overlay').classList.remove('on');
+}
+function savePersonalization() {
+  personalization = document.getElementById('personalizeInput').value.trim();
+  try { localStorage.setItem('chaturvedi_personalization', personalization); } catch (e) {}
+  if (sbReady && sbClient) {
+    sbClient.from('settings').upsert(
+      { key: 'personalization', value: personalization, updated_at: new Date().toISOString() },
+      { onConflict: 'key' }
+    ).then(function () {}).catch(function () {});
+  }
+  closePersonalize();
+  addSystemNote(personalization ? 'Got it, buddy \u2014 I\u2019ll keep that in mind.' : 'Cleared. Starting fresh.');
+}
+async function loadPersonalization() {
+  try {
+    if (sbReady && sbClient) {
+      const result = await sbClient.from('settings').select('value').eq('key', 'personalization').maybeSingle();
+      if (result.data && typeof result.data.value === 'string') {
+        personalization = result.data.value;
+        try { localStorage.setItem('chaturvedi_personalization', personalization); } catch (e) {}
+        return;
+      }
+    }
+  } catch (e) {}
+  try {
+    const local = localStorage.getItem('chaturvedi_personalization');
+    if (local) personalization = local;
+  } catch (e) {}
+}
+
 /* ══════════════════════════════════════════════════════════
    BOOT
    ══════════════════════════════════════════════════════════ */
@@ -843,6 +963,8 @@ async function boot() {
   } catch (e) {
     if (history.length === 0) greet();
   }
+
+  try { await loadPersonalization(); } catch (e) {}
 
   updateComposerState();
   setOrbState('idle');
@@ -891,7 +1013,7 @@ document.getElementById('moreBtn').addEventListener('click', function (e) {
   if (document.getElementById('menuPanel').hidden) openMenu(); else closeMenu();
 });
 document.getElementById('overlay').addEventListener('click', function () {
-  closeMenu(); closeAbout();
+  closeMenu(); closeAbout(); closePersonalize();
 });
 document.getElementById('newChatItem').addEventListener('click', newChat);
 document.getElementById('exportItem').addEventListener('click', exportChat);
@@ -899,12 +1021,15 @@ document.getElementById('voiceItem').addEventListener('click', toggleVoiceSettin
 document.getElementById('themeItem').addEventListener('click', toggleTheme);
 document.getElementById('aboutItem').addEventListener('click', openAbout);
 document.getElementById('aboutClose').addEventListener('click', closeAbout);
+document.getElementById('personalizeItem').addEventListener('click', openPersonalize);
+document.getElementById('personalizeSave').addEventListener('click', savePersonalization);
+document.getElementById('personalizeClose').addEventListener('click', closePersonalize);
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 document.getElementById('lightbox').addEventListener('click', function (e) {
   if (e.target.id === 'lightbox') closeLightbox();
 });
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') { closeMenu(); closeAbout(); closeLightbox(); }
+  if (e.key === 'Escape') { closeMenu(); closeAbout(); closePersonalize(); closeLightbox(); }
 });
 
 boot();
