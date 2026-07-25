@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-look="ink">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -29,17 +29,29 @@
   --sans:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,monospace;
 }
-[data-theme="light"]{
-  --bg:#FAFAF8;
-  --bg-elevated:#F1F0EC;
-  --bg-elevated-2:#E7E5DF;
-  --text:#18181A;
-  --text-secondary:#5B5955;
-  --text-tertiary:#8B8884;
-  --accent:#5457C7;
-  --accent-soft:rgba(84,87,199,0.10);
-  --border:rgba(0,0,0,0.08);
-  --shadow:0 20px 60px rgba(0,0,0,0.12);
+[data-look="ember"]{
+  --bg:#120D0B; --bg-elevated:#1D1512; --bg-elevated-2:#261B16;
+  --text:#F2E9E2; --text-secondary:#B8A296; --text-tertiary:#7A695E;
+  --accent:#E8734F; --accent-soft:rgba(232,115,79,0.15);
+  --border:rgba(255,220,200,0.08); --shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+[data-look="volt"]{
+  --bg:#090E13; --bg-elevated:#121A21; --bg-elevated-2:#18232C;
+  --text:#E4EEF2; --text-secondary:#9BB0BA; --text-tertiary:#5E7178;
+  --accent:#3FC6E8; --accent-soft:rgba(63,198,232,0.15);
+  --border:rgba(200,240,255,0.08); --shadow:0 20px 60px rgba(0,0,0,0.5);
+}
+[data-look="fog"]{
+  --bg:#FAFAF8; --bg-elevated:#F1F0EC; --bg-elevated-2:#E7E5DF;
+  --text:#18181A; --text-secondary:#5B5955; --text-tertiary:#8B8884;
+  --accent:#5457C7; --accent-soft:rgba(84,87,199,0.10);
+  --border:rgba(0,0,0,0.08); --shadow:0 20px 60px rgba(0,0,0,0.12);
+}
+[data-look="nova"]{
+  --bg:#FBF7EF; --bg-elevated:#F3EBDA; --bg-elevated-2:#EADFC7;
+  --text:#1E1A12; --text-secondary:#6B5F48; --text-tertiary:#96876A;
+  --accent:#B8791F; --accent-soft:rgba(184,121,31,0.12);
+  --border:rgba(0,0,0,0.08); --shadow:0 20px 60px rgba(0,0,0,0.12);
 }
 html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
 button{font-family:inherit}
@@ -153,6 +165,49 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .personalize-actions{display:flex;gap:8px;justify-content:center}
 .save-personalize{background:var(--accent);border:none;border-radius:10px;padding:8px 20px;color:#fff;font-size:13px;cursor:pointer}
 .save-personalize:hover{opacity:.9}
+
+.look-label{font-size:11px;color:var(--text-tertiary);letter-spacing:.04em;text-align:left;margin:0 0 8px;text-transform:uppercase}
+.look-row{display:flex;gap:10px;margin-bottom:18px}
+.look-swatch{width:38px;height:38px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;position:relative;flex-shrink:0;transition:transform .15s,border-color .2s}
+.look-swatch:hover{transform:scale(1.08)}
+.look-swatch.active-look{border-color:var(--text)}
+.look-swatch.active-look::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--text-tertiary)}
+.look-ink{background:linear-gradient(135deg,#0E0E10,#3336a8)}
+.look-ember{background:linear-gradient(135deg,#120D0B,#E8734F)}
+.look-volt{background:linear-gradient(135deg,#090E13,#3FC6E8)}
+.look-fog{background:linear-gradient(135deg,#FAFAF8,#5457C7);border-color:var(--border)}
+.look-nova{background:linear-gradient(135deg,#FBF7EF,#B8791F)}
+
+.pet-btn{width:38px;height:42px;border:none;background:transparent;cursor:pointer;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center}
+.pet-svg{overflow:visible}
+.pet-ears{display:none}
+[data-look="ink"] .pet-ears-ink{display:block}
+[data-look="ember"] .pet-ears-ember{display:block}
+[data-look="volt"] .pet-ears-volt{display:block}
+[data-look="fog"] .pet-ears-fog{display:block}
+[data-look="nova"] .pet-ears-nova{display:block}
+.pet-ears-ink,.pet-ears-ember,.pet-ears-volt{fill:var(--accent)}
+.pet-ears-nova-fill{fill:var(--accent)}
+.pet-ears-nova-ring{fill:none;stroke:var(--accent);stroke-width:1.3;opacity:.55}
+.pet-body{fill:var(--bg-elevated-2);stroke:var(--accent);stroke-width:1.6;transition:stroke .3s,fill .3s}
+.pet-eye{fill:var(--accent);transition:fill .3s;transform-box:fill-box;transform-origin:center}
+.pet-mouth{stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;transition:stroke .3s}
+.pet-btn.idle .pet-svg{animation:pet-bob 3.6s ease-in-out infinite}
+.pet-btn.idle .pet-eye{animation:pet-blink 4.4s ease-in-out infinite}
+@keyframes pet-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes pet-blink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.15)}}
+.pet-btn.listening .pet-svg{animation:pet-bob 1s ease-in-out infinite}
+.pet-btn.listening .pet-eye{transform:scale(1.2);animation:none}
+.pet-btn.listening .pet-body{stroke-width:2.2}
+.pet-btn.thinking .pet-eye{animation:pet-glance 1.5s ease-in-out infinite}
+.pet-btn.thinking .pet-svg{animation:pet-tilt 2.2s ease-in-out infinite}
+@keyframes pet-glance{0%,100%{transform:translateX(0)}50%{transform:translateX(1.4px)}}
+@keyframes pet-tilt{0%,100%{transform:rotate(0)}50%{transform:rotate(-4deg)}}
+.pet-btn.speaking .pet-mouth{animation:pet-talk .38s ease-in-out infinite}
+.pet-btn.speaking .pet-svg{animation:pet-bounce .5s ease-in-out infinite}
+@keyframes pet-talk{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.4)}}
+@keyframes pet-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.pet-btn:hover .pet-svg{filter:brightness(1.08)}
 .close-about{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 20px;color:var(--text);font-size:13px;cursor:pointer}
 .close-about:hover{border-color:var(--accent)}
 
@@ -197,7 +252,24 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.5l-8.5 8.5a4.95 4.95 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
     </button>
     <textarea id="composer" rows="1" placeholder="Message Chaturvedi" autocomplete="off" spellcheck="false"></textarea>
-    <button class="orb idle" id="orbBtn" aria-label="Voice"></button>
+    <button class="pet-btn idle" id="orbBtn" aria-label="Voice">
+      <svg class="pet-svg" viewBox="0 0 48 53" width="34" height="38">
+        <g class="pet-ears pet-ears-ink"><circle cx="13" cy="12" r="5"/><circle cx="35" cy="12" r="5"/></g>
+        <g class="pet-ears pet-ears-ember"><polygon points="13,18 8,4 19,13"/><polygon points="35,18 40,4 29,13"/></g>
+        <g class="pet-ears pet-ears-volt"><rect x="10" y="2" width="5" height="15" rx="2.5" transform="rotate(-20 12.5 9.5)"/><rect x="33" y="2" width="5" height="15" rx="2.5" transform="rotate(20 35.5 9.5)"/></g>
+        <g class="pet-ears pet-ears-fog"></g>
+        <g class="pet-ears pet-ears-nova">
+          <circle class="pet-ears-nova-fill" cx="13" cy="12" r="4"/>
+          <circle class="pet-ears-nova-ring" cx="13" cy="12" r="7"/>
+          <circle class="pet-ears-nova-fill" cx="35" cy="12" r="4"/>
+          <circle class="pet-ears-nova-ring" cx="35" cy="12" r="7"/>
+        </g>
+        <circle class="pet-body" cx="24" cy="28" r="18"/>
+        <circle class="pet-eye" cx="18" cy="26" r="3"/>
+        <circle class="pet-eye" cx="30" cy="26" r="3"/>
+        <path class="pet-mouth" d="M18 34 Q24 38 30 34"/>
+      </svg>
+    </button>
     <button class="send" id="sendBtn" aria-label="Send" disabled>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </button>
@@ -214,7 +286,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
   <div class="sheet-item" id="personalizeItem"><span>Personalize</span></div>
   <div class="sheet-div"></div>
   <div class="sheet-item" id="voiceItem"><span>Voice replies</span><span class="val" id="voiceLabel">On</span></div>
-  <div class="sheet-item" id="themeItem"><span>Appearance</span><span class="val" id="themeLabel">Dark</span></div>
   <div class="sheet-div"></div>
   <div class="sheet-item" id="aboutItem"><span>About Chaturvedi</span></div>
 </div>
@@ -228,6 +299,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 
 <div class="sheet" id="personalizePanel" hidden>
   <div class="about-title">Personalize</div>
+  <div class="look-label">Look</div>
+  <div class="look-row" id="lookRow">
+    <button class="look-swatch look-ink" data-look="ink" title="Ink" onclick="setLook('ink')"></button>
+    <button class="look-swatch look-ember" data-look="ember" title="Ember" onclick="setLook('ember')"></button>
+    <button class="look-swatch look-volt" data-look="volt" title="Volt" onclick="setLook('volt')"></button>
+    <button class="look-swatch look-fog" data-look="fog" title="Fog" onclick="setLook('fog')"></button>
+    <button class="look-swatch look-nova" data-look="nova" title="Nova" onclick="setLook('nova')"></button>
+  </div>
   <p class="personalize-hint">Tell Chaturvedi a little about yourself — your name, what you do, how you like answers. It'll shape every conversation from here on, quietly.</p>
   <textarea id="personalizeInput" placeholder="e.g. I'm a developer. Keep answers direct, skip the fluff, and use Python examples when relevant."></textarea>
   <div class="personalize-actions">
@@ -270,7 +349,7 @@ if (window.marked) marked.setOptions({ breaks: true, gfm: true });
 let history = [];
 let busy = false;
 let voiceOn = true;
-let theme = 'dark';
+let currentLook = 'ink';
 let listening = false;
 let recognition = null;
 let pendingAttachments = [];
@@ -378,7 +457,7 @@ function domainHint(text) {
    IMAGE GENERATION — Pollinations is public and keyless,
    no secret needed, correctly stays client-side
    ══════════════════════════════════════════════════════════ */
-const IMAGE_PATTERN = /\b(draw|sketch|generate (an|a) image( of)?|create (an|a) (image|picture|photo|illustration)( of)?|picture of|paint(ing)? of|render (an|a) image)\b/i;
+const IMAGE_PATTERN = /\b(draw|sketch|paint|illustrate|visuali[sz]e|render)\b|\b(make|generate|create|design|show me)\s+(?:an?\s+)?(image|picture|photo|illustration|artwork|drawing|painting|render|wallpaper)\b|\b(image|picture|photo|illustration|artwork)\s+of\b/i;
 
 function isImageIntent(text) { return IMAGE_PATTERN.test(text); }
 
@@ -389,9 +468,9 @@ async function enhanceImagePrompt(text) {
       { role: 'system', content: 'Turn a short image request into one vivid, detailed prompt for an image model. Add composition, lighting, and mood detail. Reply with only the improved prompt, nothing else, under 60 words.' },
       { role: 'user', content: clean }
     ]);
-    if (enhanced && enhanced.trim().length > 5) return enhanced.trim();
+    if (enhanced && enhanced.trim().length > 5) return enhanced.trim().slice(0, 350);
   } catch (e) {}
-  return clean + ', highly detailed, beautiful lighting, professional quality';
+  return (clean + ', highly detailed, beautiful lighting, professional quality').slice(0, 350);
 }
 
 function buildImageUrl(originalText, enhancedPrompt) {
@@ -506,7 +585,8 @@ function addImageCard(promptText) {
   scrollToEnd();
   return wrap;
 }
-function fillImageCard(card, url, promptText) {
+function fillImageCard(card, url, promptText, fallbackText, attempt) {
+  attempt = attempt || 1;
   const frame = card.querySelector('.image-frame');
   const img = new Image();
   img.onload = function () {
@@ -525,6 +605,12 @@ function fillImageCard(card, url, promptText) {
     scrollToEnd();
   };
   img.onerror = function () {
+    if (attempt === 1 && fallbackText) {
+      const retryUrl = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(fallbackText)
+        + '?width=1024&height=1024&seed=' + Math.floor(Math.random() * 1000000) + '&model=flux&nologo=true';
+      fillImageCard(card, retryUrl, promptText, null, 2);
+      return;
+    }
     frame.classList.remove('loading');
     frame.innerHTML = '<div class="image-error">Couldn\u2019t create that image, buddy \u2014 try describing it a little differently.</div>';
   };
@@ -743,7 +829,8 @@ async function sendMessage(rawText) {
     setOrbState('thinking');
     const enhancedPrompt = await enhanceImagePrompt(text);
     const built = buildImageUrl(text, enhancedPrompt);
-    fillImageCard(card, built.url, enhancedPrompt);
+    const plainFallback = (text.replace(IMAGE_PATTERN, '').replace(/^\s*of\s+/i, '').trim() || text).slice(0, 200);
+    fillImageCard(card, built.url, enhancedPrompt, plainFallback);
     const note = '[Generated an image: ' + enhancedPrompt.slice(0, 80) + ']';
     history.push({ role: 'assistant', content: note });
     persistTurn('assistant', note);
@@ -871,11 +958,16 @@ function exportChat() {
   URL.revokeObjectURL(a.href);
   closeMenu();
 }
-function toggleTheme() {
-  theme = theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', theme);
-  try { localStorage.setItem('chaturvedi_theme', theme); } catch (e) {}
-  updateMenuLabels();
+function setLook(name) {
+  currentLook = name;
+  document.documentElement.setAttribute('data-look', name);
+  try { localStorage.setItem('chaturvedi_look', name); } catch (e) {}
+  updateLookSwatches();
+}
+function updateLookSwatches() {
+  document.querySelectorAll('.look-swatch').forEach(function (btn) {
+    btn.classList.toggle('active-look', btn.dataset.look === currentLook);
+  });
 }
 function toggleVoiceSetting() {
   voiceOn = !voiceOn;
@@ -885,7 +977,6 @@ function toggleVoiceSetting() {
 }
 function updateMenuLabels() {
   document.getElementById('voiceLabel').textContent = voiceOn ? 'On' : 'Off';
-  document.getElementById('themeLabel').textContent = theme === 'dark' ? 'Dark' : 'Light';
 }
 function openMenu() {
   document.getElementById('menuPanel').hidden = false;
@@ -951,11 +1042,12 @@ async function loadPersonalization() {
    ══════════════════════════════════════════════════════════ */
 async function boot() {
   try {
-    const savedTheme = localStorage.getItem('chaturvedi_theme');
-    if (savedTheme) { theme = savedTheme; document.documentElement.setAttribute('data-theme', theme); }
+    const savedLook = localStorage.getItem('chaturvedi_look');
+    if (savedLook) { currentLook = savedLook; document.documentElement.setAttribute('data-look', currentLook); }
     const savedVoice = localStorage.getItem('chaturvedi_voice');
     if (savedVoice !== null) voiceOn = savedVoice === '1';
   } catch (e) {}
+  updateLookSwatches();
 
   try {
     await initMemory();
@@ -1018,7 +1110,6 @@ document.getElementById('overlay').addEventListener('click', function () {
 document.getElementById('newChatItem').addEventListener('click', newChat);
 document.getElementById('exportItem').addEventListener('click', exportChat);
 document.getElementById('voiceItem').addEventListener('click', toggleVoiceSetting);
-document.getElementById('themeItem').addEventListener('click', toggleTheme);
 document.getElementById('aboutItem').addEventListener('click', openAbout);
 document.getElementById('aboutClose').addEventListener('click', closeAbout);
 document.getElementById('personalizeItem').addEventListener('click', openPersonalize);
