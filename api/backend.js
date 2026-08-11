@@ -102,7 +102,7 @@ async function callOpenAICompatible(p, messages) {
   const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + p.key };
   if (p.id === 'openrouter') {
     headers['HTTP-Referer'] = 'https://chaturvedi.app';
-    headers['X-Title'] = 'Chaturvedi';
+    headers['X-Title'] = 'Trishul';
   }
 
   const r = await fetch(p.url, { method: 'POST', headers: headers, body: JSON.stringify(reqBody) });
