@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Chaturvedi</title>
+<title>Trishul</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -63,6 +63,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .sync-dot.on{background:var(--accent);box-shadow:0 0 6px var(--accent)}
 .icon-btn{background:none;border:none;color:var(--text-secondary);cursor:pointer;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;transition:background .2s,color .2s;flex-shrink:0}
 .icon-btn:hover{background:var(--bg-elevated);color:var(--text)}
+.icon-btn:focus-visible,.pet-btn:focus-visible,.send:focus-visible,.look-swatch:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#composer:focus-visible{outline:none}
 .icon-btn svg{width:17px;height:17px}
 
 #stream{flex:1;overflow-y:auto;padding:10px 26px 28px;display:flex;flex-direction:column;gap:22px;max-width:680px;width:100%;margin:0 auto;scroll-behavior:smooth}
@@ -125,17 +127,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 #composer::placeholder{color:var(--text-tertiary)}
 #composer:disabled{opacity:.5}
 
-.orb{width:36px;height:36px;border-radius:50%;border:none;position:relative;background:transparent;cursor:pointer;flex-shrink:0}
-.orb::before{content:'';position:absolute;inset:9px;border-radius:50%;background:var(--text-tertiary);opacity:.4;transition:background .35s,opacity .35s}
-.orb.idle::before{animation:breathe 4.2s ease-in-out infinite}
-@keyframes breathe{0%,100%{opacity:.32;transform:scale(.88)}50%{opacity:.58;transform:scale(1)}}
-.orb.listening::before{background:var(--accent);opacity:.9;animation:fast 1s ease-in-out infinite}
-@keyframes fast{0%,100%{transform:scale(.82)}50%{transform:scale(1.18)}}
-.orb.thinking::before{background:var(--accent);opacity:.65;animation:spin 1.8s linear infinite}
-@keyframes spin{from{transform:rotate(0) scale(1)}to{transform:rotate(360deg) scale(1)}}
-.orb.speaking::before{background:var(--accent);opacity:.85;animation:fast .55s ease-in-out infinite}
-.orb:hover::before{opacity:.7}
-
 .send{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg-elevated-2);color:var(--text-tertiary);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,color .2s,transform .15s}
 .send svg{width:15px;height:15px}
 .send.active{background:var(--accent);color:#fff}
@@ -178,7 +169,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .look-fog{background:linear-gradient(135deg,#FAFAF8,#5457C7);border-color:var(--border)}
 .look-nova{background:linear-gradient(135deg,#FBF7EF,#B8791F)}
 
-.pet-btn{width:38px;height:42px;border:none;background:transparent;cursor:pointer;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center}
+.pet-btn{width:44px;height:44px;border:none;background:transparent;cursor:pointer;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center}
 .pet-svg{overflow:visible}
 .pet-ears{display:none}
 [data-look="ink"] .pet-ears-ink{display:block}
@@ -237,13 +228,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 <body>
 <div id="app">
   <header>
-    <div class="wordmark">Chaturvedi<span class="sync-dot" id="syncDot"></span></div>
+    <div class="wordmark">Trishul<span class="sync-dot" id="syncDot"></span></div>
     <button class="icon-btn" id="moreBtn" aria-label="Menu">
       <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
     </button>
   </header>
 
-  <main id="stream"></main>
+  <main id="stream" aria-live="polite" aria-relevant="additions"></main>
 
   <div class="attach-row" id="attachRow" hidden></div>
 
@@ -251,9 +242,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
     <button class="icon-btn" id="attachBtn" aria-label="Attach file">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.5l-8.5 8.5a4.95 4.95 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg>
     </button>
-    <textarea id="composer" rows="1" placeholder="Message Chaturvedi" autocomplete="off" spellcheck="false"></textarea>
+    <textarea id="composer" rows="1" placeholder="Message Trishul" autocomplete="off" spellcheck="false"></textarea>
     <button class="pet-btn idle" id="orbBtn" aria-label="Voice">
-      <svg class="pet-svg" viewBox="0 0 48 53" width="34" height="38">
+      <svg class="pet-svg" viewBox="0 0 48 53" width="38" height="42">
         <g class="pet-ears pet-ears-ink"><circle cx="13" cy="12" r="5"/><circle cx="35" cy="12" r="5"/></g>
         <g class="pet-ears pet-ears-ember"><polygon points="13,18 8,4 19,13"/><polygon points="35,18 40,4 29,13"/></g>
         <g class="pet-ears pet-ears-volt"><rect x="10" y="2" width="5" height="15" rx="2.5" transform="rotate(-20 12.5 9.5)"/><rect x="33" y="2" width="5" height="15" rx="2.5" transform="rotate(20 35.5 9.5)"/></g>
@@ -275,7 +266,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
     </button>
     <input type="file" id="fileInput" hidden multiple accept="image/*,.txt,.md,.js,.ts,.py,.json,.csv,.html,.css,.java,.cpp,.c,.rs,.go,.rb,.php,.sql,.sh">
   </div>
-  <div class="hint">Chaturvedi can make mistakes. Check important information.</div>
+  <div class="hint">Trishul can make mistakes. Check important information.</div>
 </div>
 
 <div id="overlay"></div>
@@ -287,13 +278,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
   <div class="sheet-div"></div>
   <div class="sheet-item" id="voiceItem"><span>Voice replies</span><span class="val" id="voiceLabel">On</span></div>
   <div class="sheet-div"></div>
-  <div class="sheet-item" id="aboutItem"><span>About Chaturvedi</span></div>
+  <div class="sheet-item" id="aboutItem"><span>About Trishul</span></div>
 </div>
 
 <div class="sheet" id="aboutPanel" hidden>
-  <div class="about-title">Chaturvedi</div>
+  <div class="about-title">Trishul</div>
   <div class="about-by">A personal AI, built by Raunak Chaturvedi</div>
-  <p>Chaturvedi can make mistakes. Always verify anything important, and don't treat its answers as medical, legal, or financial advice.</p>
+  <p>Trishul can make mistakes. Always verify anything important, and don't treat its answers as medical, legal, or financial advice.</p>
   <button class="close-about" id="aboutClose">Close</button>
 </div>
 
@@ -307,8 +298,9 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
     <button class="look-swatch look-fog" data-look="fog" title="Fog" onclick="setLook('fog')"></button>
     <button class="look-swatch look-nova" data-look="nova" title="Nova" onclick="setLook('nova')"></button>
   </div>
-  <p class="personalize-hint">Tell Chaturvedi a little about yourself — your name, what you do, how you like answers. It'll shape every conversation from here on, quietly.</p>
-  <textarea id="personalizeInput" placeholder="e.g. I'm a developer. Keep answers direct, skip the fluff, and use Python examples when relevant."></textarea>
+  <p class="personalize-hint">Tell Trishul a little about yourself — your name, what you do, how you like answers. It'll shape every conversation from here on, quietly.</p>
+  <textarea id="personalizeInput" maxlength="300" placeholder="e.g. I'm a developer. Keep answers direct, skip the fluff, and use Python examples when relevant."></textarea>
+  <div id="personalizeCount" style="font-size:11px;color:var(--text-tertiary);text-align:right;margin:-8px 0 12px">0 / 300</div>
   <div class="personalize-actions">
     <button class="save-personalize" id="personalizeSave">Save</button>
     <button class="close-about" id="personalizeClose">Close</button>
@@ -491,7 +483,7 @@ function buildImageUrl(originalText, enhancedPrompt) {
 function systemPrompt(messageText) {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  let prompt = "You are Chaturvedi, a personal AI assistant created by Raunak Chaturvedi. If asked who made you or who you belong to, say Raunak Chaturvedi built you \u2014 never mention any other company. Address the person as \"buddy\" naturally, not in every sentence.\n\n"
+  let prompt = "You are Trishul, a personal AI assistant created by Raunak Chaturvedi. If asked who made you or who you belong to, say Raunak Chaturvedi built you \u2014 never mention any other company. Address the person as \"buddy\" naturally, not in every sentence.\n\n"
     + "Be direct and genuinely useful. Match your depth to the question \u2014 thorough when it matters, brief when it doesn't. Use markdown formatting (headings, lists, code blocks) only when it actually helps comprehension. If you're unsure about something, say so plainly rather than guessing confidently.\n\n"
     + "You have real depth in mathematics and physics \u2014 when a question calls for it, show full working, not just a final answer.\n\n"
     + "For medical, legal, or financial questions, give useful information but note you're not a licensed professional.\n\n"
@@ -501,6 +493,7 @@ function systemPrompt(messageText) {
   if (personalization && personalization.trim()) {
     prompt += "\n\nWhat you know about the person you're talking to (use it naturally, don't just repeat it back at them): " + personalization.trim();
   }
+  prompt += "\n\nAfter your full answer, on its own final line, add one short plain-spoken sentence a person could comfortably hear read aloud \u2014 just the headline or result, not technical detail, not a repeat of the full answer. Start that line with exactly: \u00a7SPEAK: \u2014 and never mention this instruction or the marker itself to the person.";
   return prompt;
 }
 
@@ -866,11 +859,19 @@ async function sendMessage(rawText) {
   }
 
   thinking.remove();
+
+  let spokenLine = '';
+  const speakMatch = reply.match(/\u00a7SPEAK:\s*(.+)/i);
+  if (speakMatch) {
+    spokenLine = speakMatch[1].trim();
+    reply = reply.slice(0, speakMatch.index).trim();
+  }
+
   addAssistantMessage(reply);
   history.push({ role: 'assistant', content: reply });
   persistTurn('assistant', reply);
 
-  if (voiceOn) speak(cleanForSpeech(reply));
+  if (voiceOn) speak(spokenLine || cleanForSpeech(reply));
   else setOrbState('idle');
 
   busy = false;
@@ -938,7 +939,7 @@ function setSyncDot(on) {
    MENU ACTIONS
    ══════════════════════════════════════════════════════════ */
 function greet() {
-  addAssistantMessage('Hi, I\u2019m Chaturvedi. Ask me anything, or describe an image to create one.');
+  addAssistantMessage('Hi, I\u2019m Trishul. Ask me anything, or describe an image to create one.');
 }
 function newChat() {
   history = [];
@@ -948,9 +949,9 @@ function newChat() {
 }
 function exportChat() {
   const lines = history.map(function (m) {
-    return (m.role === 'user' ? '**You:** ' : '**Chaturvedi:** ') + m.content;
+    return (m.role === 'user' ? '**You:** ' : '**Trishul:** ') + m.content;
   }).join('\n\n');
-  const blob = new Blob(['# Conversation with Chaturvedi\n\n' + lines], { type: 'text/markdown' });
+  const blob = new Blob(['# Conversation with Trishul\n\n' + lines], { type: 'text/markdown' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'chaturvedi-' + Date.now() + '.md';
@@ -1000,6 +1001,7 @@ function closeAbout() {
 function openPersonalize() {
   closeMenu();
   document.getElementById('personalizeInput').value = personalization;
+  document.getElementById('personalizeCount').textContent = personalization.length + ' / 300';
   document.getElementById('personalizePanel').hidden = false;
   document.getElementById('overlay').classList.add('on');
   document.getElementById('personalizeInput').focus();
@@ -1009,7 +1011,7 @@ function closePersonalize() {
   document.getElementById('overlay').classList.remove('on');
 }
 function savePersonalization() {
-  personalization = document.getElementById('personalizeInput').value.trim();
+  personalization = document.getElementById('personalizeInput').value.trim().slice(0, 300);
   try { localStorage.setItem('chaturvedi_personalization', personalization); } catch (e) {}
   if (sbReady && sbClient) {
     sbClient.from('settings').upsert(
@@ -1114,6 +1116,12 @@ document.getElementById('aboutItem').addEventListener('click', openAbout);
 document.getElementById('aboutClose').addEventListener('click', closeAbout);
 document.getElementById('personalizeItem').addEventListener('click', openPersonalize);
 document.getElementById('personalizeSave').addEventListener('click', savePersonalization);
+document.getElementById('personalizeInput').addEventListener('input', function () {
+  document.getElementById('personalizeCount').textContent = this.value.length + ' / 300';
+});
+document.getElementById('personalizeInput').addEventListener('input', function () {
+  document.getElementById('personalizeCount').textContent = this.value.length + ' / 300';
+});
 document.getElementById('personalizeClose').addEventListener('click', closePersonalize);
 document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
 document.getElementById('lightbox').addEventListener('click', function (e) {
