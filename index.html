@@ -211,6 +211,35 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 #lightboxClose{position:fixed;top:20px;right:22px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;width:38px;height:38px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #lightboxClose:hover{background:rgba(255,0,0,.25)}
 
+#workspacePanel{position:fixed;inset:0 0 0 auto;width:min(430px,100vw);z-index:70;background:var(--bg);border-left:1px solid var(--border);box-shadow:var(--shadow);display:flex;flex-direction:column;animation:workspace-in .24s ease}
+@keyframes workspace-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+.workspace-header{display:flex;align-items:center;justify-content:space-between;padding:22px 22px 16px;border-bottom:1px solid var(--border)}
+.workspace-title{font-family:var(--serif);font-size:25px;letter-spacing:-.02em}
+.workspace-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:14px 18px 8px}
+.workspace-tab{border:0;border-radius:9px;background:transparent;color:var(--text-tertiary);padding:8px 4px;font-size:12px;cursor:pointer}
+.workspace-tab.active{background:var(--bg-elevated);color:var(--text)}
+.workspace-body{min-height:0;flex:1;overflow-y:auto;padding:10px 18px 28px}
+.workspace-actions{display:flex;gap:8px;margin:0 0 14px}
+.workspace-action{border:1px solid var(--border);border-radius:9px;background:var(--bg-elevated);color:var(--text);padding:8px 10px;font-size:12px;cursor:pointer}
+.workspace-action.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.workspace-list{display:flex;flex-direction:column;gap:7px}
+.workspace-row{display:flex;align-items:center;gap:10px;padding:11px 10px;border:1px solid transparent;border-radius:11px;cursor:pointer}
+.workspace-row:hover{background:var(--bg-elevated)}
+.workspace-row.active{background:var(--accent-soft);border-color:rgba(115,118,232,.25)}
+.workspace-row-copy{min-width:0;flex:1}
+.workspace-row-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--text)}
+.workspace-row-meta{margin-top:3px;font-size:11px;color:var(--text-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workspace-row-button{border:0;background:transparent;color:var(--text-tertiary);cursor:pointer;padding:4px 6px;border-radius:6px;font-size:13px}
+.workspace-row-button:hover{background:var(--bg-elevated-2);color:var(--text)}
+.workspace-empty{padding:34px 12px;color:var(--text-tertiary);text-align:center;font-size:13px;line-height:1.6}
+.workspace-input{width:100%;border:1px solid var(--border);border-radius:10px;background:var(--bg-elevated);color:var(--text);font:inherit;font-size:13px;padding:10px 11px;outline:none;margin-bottom:9px}
+.workspace-input:focus{border-color:var(--accent)}
+.workspace-textarea{min-height:120px;resize:vertical}
+.task-check{appearance:none;width:17px;height:17px;border:1px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;flex-shrink:0}
+.task-check:checked{background:var(--accent);border-color:var(--accent);box-shadow:inset 0 0 0 4px var(--bg)}
+.task-done .workspace-row-title{text-decoration:line-through;color:var(--text-tertiary)}
+.workspace-project{display:inline-flex;align-items:center;border-radius:5px;background:var(--bg-elevated-2);color:var(--text-tertiary);font-size:10px;padding:2px 5px;margin-top:5px}
+
 @media(max-width:640px){
   header{padding:16px 18px 8px}
   .wordmark{font-size:20px}
@@ -229,9 +258,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 <div id="app">
   <header>
     <div class="wordmark">Trishul<span class="sync-dot" id="syncDot"></span></div>
-    <button class="icon-btn" id="moreBtn" aria-label="Menu">
-      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
-    </button>
+    <div style="display:flex;gap:3px">
+      <button class="icon-btn" id="workspaceBtn" aria-label="Open workspace">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 14h5"/></svg>
+      </button>
+      <button class="icon-btn" id="moreBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+      </button>
+    </div>
   </header>
 
   <main id="stream" aria-live="polite" aria-relevant="additions"></main>
@@ -271,7 +305,22 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 
 <div id="overlay"></div>
 
+<aside id="workspacePanel" hidden aria-label="Workspace">
+  <div class="workspace-header">
+    <div class="workspace-title">Workspace</div>
+    <button class="icon-btn" id="workspaceClose" aria-label="Close workspace">X</button>
+  </div>
+  <div class="workspace-tabs" role="tablist">
+    <button class="workspace-tab active" data-workspace-tab="chats">Chats</button>
+    <button class="workspace-tab" data-workspace-tab="projects">Projects</button>
+    <button class="workspace-tab" data-workspace-tab="notes">Notes</button>
+    <button class="workspace-tab" data-workspace-tab="tasks">Tasks</button>
+  </div>
+  <div class="workspace-body" id="workspaceBody"></div>
+</aside>
+
 <div class="sheet" id="menuPanel" hidden>
+  <div class="sheet-item" id="workspaceItem"><span>Workspace</span></div>
   <div class="sheet-item" id="newChatItem"><span>New chat</span></div>
   <div class="sheet-item" id="exportItem"><span>Export conversation</span></div>
   <div class="sheet-item" id="personalizeItem"><span>Personalize</span></div>
@@ -348,6 +397,210 @@ let pendingAttachments = [];
 let sbClient = null;
 let sbReady = false;
 let personalization = '';
+let workspaceTab = 'chats';
+let workspace = { projects: [], conversations: [], notes: [], tasks: [], activeConversationId: null, activeProjectId: 'personal' };
+
+const WORKSPACE_KEY = 'trishul_workspace_v1';
+
+function makeId(prefix) {
+  return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function defaultProject() {
+  let project = workspace.projects.find(function (item) { return item.id === 'personal'; });
+  if (!project) {
+    project = { id: 'personal', name: 'Personal', createdAt: new Date().toISOString() };
+    workspace.projects.unshift(project);
+  }
+  if (!workspace.activeProjectId) workspace.activeProjectId = project.id;
+  return project;
+}
+function activeConversation() {
+  return workspace.conversations.find(function (item) { return item.id === workspace.activeConversationId; }) || null;
+}
+function saveWorkspace() {
+  try { localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace)); } catch (e) {}
+}
+function conversationTitle(messages) {
+  const firstUser = messages.find(function (message) { return message.role === 'user'; });
+  if (!firstUser) return 'New conversation';
+  return String(firstUser.content).replace(/\s+/g, ' ').trim().slice(0, 46) || 'New conversation';
+}
+function createConversation(projectId) {
+  const conversation = {
+    id: makeId('chat'),
+    projectId: projectId || workspace.activeProjectId || defaultProject().id,
+    title: 'New conversation',
+    pinned: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    messages: []
+  };
+  workspace.conversations.unshift(conversation);
+  workspace.activeConversationId = conversation.id;
+  history = [];
+  saveWorkspace();
+  return conversation;
+}
+function persistConversation() {
+  let conversation = activeConversation();
+  if (!conversation) {
+    conversation = {
+      id: makeId('chat'), projectId: defaultProject().id, title: 'New conversation', pinned: false,
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), messages: []
+    };
+    workspace.conversations.unshift(conversation);
+    workspace.activeConversationId = conversation.id;
+  }
+  conversation.messages = history.map(function (message) {
+    return { role: message.role, content: message.content };
+  });
+  conversation.title = conversationTitle(conversation.messages);
+  conversation.updatedAt = new Date().toISOString();
+  workspace.conversations.sort(function (left, right) {
+    if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
+    return new Date(right.updatedAt) - new Date(left.updatedAt);
+  });
+  saveWorkspace();
+  if (!document.getElementById('workspacePanel').hidden) renderWorkspace();
+}
+function loadWorkspace() {
+  try {
+    const raw = localStorage.getItem(WORKSPACE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved || !Array.isArray(saved.conversations)) return false;
+    workspace = {
+      projects: Array.isArray(saved.projects) ? saved.projects : [],
+      conversations: saved.conversations,
+      notes: Array.isArray(saved.notes) ? saved.notes : [],
+      tasks: Array.isArray(saved.tasks) ? saved.tasks : [],
+      activeConversationId: saved.activeConversationId || null,
+      activeProjectId: saved.activeProjectId || 'personal'
+    };
+    defaultProject();
+    let conversation = activeConversation();
+    if (!conversation && workspace.conversations.length) {
+      conversation = workspace.conversations[0];
+      workspace.activeConversationId = conversation.id;
+    }
+    if (conversation && Array.isArray(conversation.messages)) {
+      history = conversation.messages.slice();
+      history.forEach(function (message) {
+        if (message.role === 'user') addUserMessage(message.content);
+        else addAssistantMessage(message.content);
+      });
+    }
+    saveWorkspace();
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+function projectName(projectId) {
+  const project = workspace.projects.find(function (item) { return item.id === projectId; });
+  return project ? project.name : 'Personal';
+}
+function openWorkspace(tab) {
+  if (tab) workspaceTab = tab;
+  closeMenu();
+  document.getElementById('workspacePanel').hidden = false;
+  renderWorkspace();
+}
+function closeWorkspace() {
+  document.getElementById('workspacePanel').hidden = true;
+}
+function renderWorkspace() {
+  const body = document.getElementById('workspaceBody');
+  document.querySelectorAll('[data-workspace-tab]').forEach(function (button) {
+    button.classList.toggle('active', button.dataset.workspaceTab === workspaceTab);
+  });
+  if (workspaceTab === 'chats') renderChats(body);
+  else if (workspaceTab === 'projects') renderProjects(body);
+  else if (workspaceTab === 'notes') renderNotes(body);
+  else renderTasks(body);
+}
+function renderChats(body) {
+  const conversations = workspace.conversations.slice().sort(function (left, right) {
+    if (left.pinned !== right.pinned) return left.pinned ? -1 : 1;
+    return new Date(right.updatedAt) - new Date(left.updatedAt);
+  });
+  body.innerHTML = '<div class="workspace-actions"><button class="workspace-action primary" id="workspaceNewChat">New chat</button></div>'
+    + (conversations.length ? '<div class="workspace-list">' + conversations.map(function (conversation) {
+      const preview = conversation.messages && conversation.messages.length ? conversation.messages[conversation.messages.length - 1].content : 'No messages yet';
+      return '<div class="workspace-row' + (conversation.id === workspace.activeConversationId ? ' active' : '') + '" data-chat-id="' + conversation.id + '">'
+        + '<div class="workspace-row-copy"><div class="workspace-row-title">' + escapeHtml(conversation.title) + '</div><div class="workspace-row-meta">' + escapeHtml(projectName(conversation.projectId)) + ' · ' + escapeHtml(preview) + '</div></div>'
+        + '<button class="workspace-row-button" data-pin-chat="' + conversation.id + '" aria-label="Pin conversation">' + (conversation.pinned ? '★' : '☆') + '</button></div>';
+    }).join('') + '</div>' : '<div class="workspace-empty">Your conversations will live here.</div>');
+  document.getElementById('workspaceNewChat').addEventListener('click', function () { newChat(); openWorkspace('chats'); });
+  body.querySelectorAll('[data-chat-id]').forEach(function (row) {
+    row.addEventListener('click', function (event) {
+      if (event.target.closest('[data-pin-chat]')) return;
+      const conversation = workspace.conversations.find(function (item) { return item.id === row.dataset.chatId; });
+      if (!conversation) return;
+      workspace.activeConversationId = conversation.id;
+      history = conversation.messages ? conversation.messages.slice() : [];
+      document.getElementById('stream').innerHTML = '';
+      history.forEach(function (message) { if (message.role === 'user') addUserMessage(message.content); else addAssistantMessage(message.content); });
+      saveWorkspace(); closeWorkspace();
+    });
+  });
+  body.querySelectorAll('[data-pin-chat]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      const conversation = workspace.conversations.find(function (item) { return item.id === button.dataset.pinChat; });
+      if (conversation) { conversation.pinned = !conversation.pinned; saveWorkspace(); renderWorkspace(); }
+    });
+  });
+}
+function renderProjects(body) {
+  body.innerHTML = '<div class="workspace-actions"><button class="workspace-action primary" id="workspaceNewProject">New project</button></div><div class="workspace-list">'
+    + workspace.projects.map(function (project) {
+      const count = workspace.conversations.filter(function (conversation) { return conversation.projectId === project.id; }).length;
+      return '<div class="workspace-row' + (project.id === workspace.activeProjectId ? ' active' : '') + '" data-project-id="' + project.id + '"><div class="workspace-row-copy"><div class="workspace-row-title">' + escapeHtml(project.name) + '</div><div class="workspace-row-meta">' + count + ' conversation' + (count === 1 ? '' : 's') + '</div></div></div>';
+    }).join('') + '</div>';
+  document.getElementById('workspaceNewProject').addEventListener('click', function () {
+    const name = window.prompt('Name this project');
+    if (!name || !name.trim()) return;
+    const project = { id: makeId('project'), name: name.trim().slice(0, 50), createdAt: new Date().toISOString() };
+    workspace.projects.push(project);
+    workspace.activeProjectId = project.id;
+    saveWorkspace(); renderWorkspace();
+  });
+  body.querySelectorAll('[data-project-id]').forEach(function (row) {
+    row.addEventListener('click', function () { workspace.activeProjectId = row.dataset.projectId; saveWorkspace(); renderWorkspace(); });
+  });
+}
+function renderNotes(body) {
+  body.innerHTML = '<div class="workspace-actions"><button class="workspace-action primary" id="workspaceNewNote">New note</button></div>'
+    + (workspace.notes.length ? '<div class="workspace-list">' + workspace.notes.slice().sort(function (left, right) { return new Date(right.updatedAt) - new Date(left.updatedAt); }).map(function (note) {
+      return '<div class="workspace-row" data-note-id="' + note.id + '"><div class="workspace-row-copy"><div class="workspace-row-title">' + escapeHtml(note.title) + '</div><div class="workspace-row-meta">' + escapeHtml(note.content || 'Empty note') + '</div><div class="workspace-project">' + escapeHtml(projectName(note.projectId)) + '</div></div><button class="workspace-row-button" data-delete-note="' + note.id + '">×</button></div>';
+    }).join('') + '</div>' : '<div class="workspace-empty">Capture an idea before it disappears.</div>');
+  document.getElementById('workspaceNewNote').addEventListener('click', function () { editNote(); });
+  body.querySelectorAll('[data-note-id]').forEach(function (row) { row.addEventListener('click', function (event) { if (!event.target.closest('[data-delete-note]')) editNote(row.dataset.noteId); }); });
+  body.querySelectorAll('[data-delete-note]').forEach(function (button) { button.addEventListener('click', function () { workspace.notes = workspace.notes.filter(function (note) { return note.id !== button.dataset.deleteNote; }); saveWorkspace(); renderWorkspace(); }); });
+}
+function editNote(noteId) {
+  const note = workspace.notes.find(function (item) { return item.id === noteId; });
+  const title = window.prompt('Note title', note ? note.title : '');
+  if (title === null) return;
+  const content = window.prompt('Note', note ? note.content : '');
+  if (content === null) return;
+  if (note) { note.title = title.trim() || 'Untitled note'; note.content = content.trim(); note.updatedAt = new Date().toISOString(); }
+  else workspace.notes.push({ id: makeId('note'), title: title.trim() || 'Untitled note', content: content.trim(), projectId: workspace.activeProjectId || defaultProject().id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  saveWorkspace(); renderWorkspace();
+}
+function renderTasks(body) {
+  body.innerHTML = '<div class="workspace-actions"><button class="workspace-action primary" id="workspaceNewTask">New task</button></div>'
+    + (workspace.tasks.length ? '<div class="workspace-list">' + workspace.tasks.slice().sort(function (left, right) { return Number(left.done) - Number(right.done); }).map(function (task) {
+      return '<label class="workspace-row' + (task.done ? ' task-done' : '') + '"><input class="task-check" type="checkbox" data-task-id="' + task.id + '"' + (task.done ? ' checked' : '') + '><div class="workspace-row-copy"><div class="workspace-row-title">' + escapeHtml(task.title) + '</div><div class="workspace-project">' + escapeHtml(projectName(task.projectId)) + '</div></div></label>';
+    }).join('') + '</div>' : '<div class="workspace-empty">Turn a thought into the next action.</div>');
+  document.getElementById('workspaceNewTask').addEventListener('click', function () {
+    const title = window.prompt('What needs to be done?');
+    if (!title || !title.trim()) return;
+    workspace.tasks.push({ id: makeId('task'), title: title.trim().slice(0, 160), projectId: workspace.activeProjectId || defaultProject().id, done: false, createdAt: new Date().toISOString() });
+    saveWorkspace(); renderWorkspace();
+  });
+  body.querySelectorAll('[data-task-id]').forEach(function (input) { input.addEventListener('change', function () { const task = workspace.tasks.find(function (item) { return item.id === input.dataset.taskId; }); if (task) { task.done = input.checked; saveWorkspace(); renderWorkspace(); } }); });
+}
 
 /* ══════════════════════════════════════════════════════════
    BACKEND CALLS — the only network calls that carry secrets
@@ -882,6 +1135,10 @@ async function sendMessage(rawText) {
    MEMORY — Supabase primary, localStorage fallback
    ══════════════════════════════════════════════════════════ */
 async function initMemory() {
+  if (loadWorkspace()) {
+    setSyncDot(false);
+    return;
+  }
   try {
     if (window.supabase) {
       sbClient = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
@@ -899,6 +1156,7 @@ async function initMemory() {
           if (m.role === 'user') addUserMessage(m.content);
           else addAssistantMessage(m.content);
         });
+        if (history.length) persistConversation();
         return;
       }
     }
@@ -912,11 +1170,13 @@ async function initMemory() {
         if (m.role === 'user') addUserMessage(m.content);
         else addAssistantMessage(m.content);
       });
+      if (history.length) persistConversation();
     }
   } catch (e) {}
   setSyncDot(false);
 }
 function persistTurn(role, content) {
+  persistConversation();
   try {
     const raw = localStorage.getItem('chaturvedi_history');
     const arr = raw ? JSON.parse(raw) : [];
@@ -939,10 +1199,13 @@ function setSyncDot(on) {
    MENU ACTIONS
    ══════════════════════════════════════════════════════════ */
 function greet() {
-  addAssistantMessage('Hi, I\u2019m Trishul. Ask me anything, or describe an image to create one.');
+  const message = 'Hi, I\u2019m Trishul. Ask me anything, or describe an image to create one.';
+  addAssistantMessage(message);
+  history.push({ role: 'assistant', content: message });
+  persistTurn('assistant', message);
 }
 function newChat() {
-  history = [];
+  createConversation();
   document.getElementById('stream').innerHTML = '';
   greet();
   closeMenu();
@@ -1106,6 +1369,12 @@ document.getElementById('moreBtn').addEventListener('click', function (e) {
   e.stopPropagation();
   if (document.getElementById('menuPanel').hidden) openMenu(); else closeMenu();
 });
+document.getElementById('workspaceBtn').addEventListener('click', function () { openWorkspace(); });
+document.getElementById('workspaceItem').addEventListener('click', function () { openWorkspace(); });
+document.getElementById('workspaceClose').addEventListener('click', closeWorkspace);
+document.querySelectorAll('[data-workspace-tab]').forEach(function (button) {
+  button.addEventListener('click', function () { openWorkspace(button.dataset.workspaceTab); });
+});
 document.getElementById('overlay').addEventListener('click', function () {
   closeMenu(); closeAbout(); closePersonalize();
 });
@@ -1128,7 +1397,7 @@ document.getElementById('lightbox').addEventListener('click', function (e) {
   if (e.target.id === 'lightbox') closeLightbox();
 });
 document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') { closeMenu(); closeAbout(); closePersonalize(); closeLightbox(); }
+  if (e.key === 'Escape') { closeMenu(); closeAbout(); closePersonalize(); closeLightbox(); closeWorkspace(); }
 });
 
 boot();
