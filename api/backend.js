@@ -34,6 +34,8 @@ module.exports = async function handler(req, res) {
 
   if (body.type === 'search') {
     await handleSearch(body, res);
+  } else if (body.type === 'vision') {
+    await handleVision(body, res);
   } else {
     await handleChat(body, res);
   }
@@ -96,18 +98,12 @@ const PROVIDERS = [
   }
 ];
 
-async function handleChat(body, res) {
-  const messages = body.messages;
-  if (!Array.isArray(messages) || messages.length === 0) {
-    res.status(400).json({ error: 'bad_request', detail: 'messages array required' });
-    return;
-  }
-
+async function tryProviders(list, caller) {
   const reasons = [];
   let anyKey = false;
 
-  for (let i = 0; i < PROVIDERS.length; i++) {
-    const p = PROVIDERS[i];
+  for (let i = 0; i < list.length; i++) {
+    const p = list[i];
     const key = process.env[p.env];
     if (!key) continue;
     anyKey = true;
@@ -125,11 +121,10 @@ async function handleChat(body, res) {
         const model = cands[j];
         tried[model] = true;
         try {
-          const reply = await withTimeout(callProvider(p, key, model, messages), 15000);
+          const reply = await withTimeout(caller(p, key, model), 20000);
           if (reply && String(reply).trim()) {
-            rememberWorking(p.id, model);
-            res.status(200).json({ reply: reply });
-            return;
+            rememberWorking(p.cacheKey || p.id, model);
+            return { reply: reply };
           }
           reasons.push(p.id + '_empty_reply');
         } catch (e) {
@@ -144,10 +139,120 @@ async function handleChat(body, res) {
     }
   }
 
-  res.status(502).json({
+  return {
     error: 'all_providers_failed',
     detail: anyKey ? (reasons.join('; ') || 'unknown') : 'no_api_keys_set_in_vercel'
+  };
+}
+
+async function handleChat(body, res) {
+  const messages = body.messages;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    res.status(400).json({ error: 'bad_request', detail: 'messages array required' });
+    return;
+  }
+  const out = await tryProviders(PROVIDERS, function (p, key, model) {
+    return callProvider(p, key, model, messages);
   });
+  if (out.reply) { res.status(200).json({ reply: out.reply }); return; }
+  res.status(502).json(out);
+}
+
+/* ── VISION (image analysis) ──────────────────────────────── */
+/* Same self-updating idea, but only providers that can see images,
+   and with their own model preferences (cached separately). */
+const VISION_SETTINGS = {
+  google: {},
+  anthropic: {},
+  groq: {
+    prefs: [/llama-4/, /scout|maverick/, /vision/],
+    fallback: ['meta-llama/llama-4-scout-17b-16e-instruct']
+  },
+  openrouter: {
+    prefs: [/gemma-3.*it/, /llama-4/, /qwen.*vl/, /vision|-vl-|\bvl\b/, /mistral.*(small|3)/],
+    exclude: /embed|audio|guard|moderation/i,
+    fallback: ['google/gemma-3-27b-it:free']
+  }
+};
+
+function visionProviders() {
+  const out = [];
+  ['google', 'groq', 'openrouter', 'anthropic'].forEach(function (id) {
+    const base = PROVIDERS.filter(function (p) { return p.id === id; })[0];
+    const s = VISION_SETTINGS[id];
+    out.push(Object.assign({}, base, {
+      prefs: s.prefs || base.prefs,
+      exclude: s.exclude || base.exclude,
+      fallback: s.fallback || base.fallback,
+      cacheKey: id + ':vision'
+    }));
+  });
+  return out;
+}
+
+async function handleVision(body, res) {
+  const prompt = typeof body.prompt === 'string' ? body.prompt : '';
+  const system = typeof body.system === 'string' ? body.system : '';
+  const images = Array.isArray(body.images) ? body.images.slice(0, 3) : [];
+
+  const parsed = [];
+  images.forEach(function (d) {
+    const m = /^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,([A-Za-z0-9+\/=]+)$/.exec(String(d));
+    if (m) parsed.push({ mime: m[1] === 'image/jpg' ? 'image/jpeg' : m[1], data: m[2], url: String(d) });
+  });
+  if (!prompt || !parsed.length) {
+    res.status(400).json({ error: 'bad_request', detail: 'prompt and at least one image required' });
+    return;
+  }
+
+  const out = await tryProviders(visionProviders(), function (p, key, model) {
+    return callVision(p, key, model, system, prompt, parsed);
+  });
+  if (out.reply) { res.status(200).json({ reply: out.reply }); return; }
+  res.status(502).json(out);
+}
+
+async function callVision(p, key, model, system, prompt, imgs) {
+  if (p.kind === 'gemini') {
+    const parts = [{ text: (system ? system + '\n\n' : '') + prompt }];
+    imgs.forEach(function (im) { parts.push({ inline_data: { mime_type: im.mime, data: im.data } }); });
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: parts }], generationConfig: { temperature: 0.5, maxOutputTokens: 1500 } })
+    });
+    if (!r.ok) throw httpError('google', r.status);
+    const data = await r.json();
+    return data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text;
+  }
+
+  if (p.kind === 'anthropic') {
+    const content = imgs.map(function (im) {
+      return { type: 'image', source: { type: 'base64', media_type: im.mime, data: im.data } };
+    });
+    content.push({ type: 'text', text: prompt });
+    const r = await fetch(p.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: model, max_tokens: 1500, system: system || undefined, messages: [{ role: 'user', content: content }] })
+    });
+    if (!r.ok) throw httpError(p.id, r.status);
+    const data = await r.json();
+    return data.content && data.content[0] && data.content[0].text;
+  }
+
+  const userContent = [{ type: 'text', text: prompt }];
+  imgs.forEach(function (im) { userContent.push({ type: 'image_url', image_url: { url: im.url } }); });
+  const msgs = [];
+  if (system) msgs.push({ role: 'system', content: system });
+  msgs.push({ role: 'user', content: userContent });
+  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
+  if (p.id === 'openrouter') { headers['HTTP-Referer'] = 'https://chaturvedi.app'; headers['X-Title'] = 'Trishul'; }
+  const r = await fetch(p.url, { method: 'POST', headers: headers, body: JSON.stringify({ model: model, messages: msgs, max_tokens: 1500 }) });
+  if (!r.ok) throw httpError(p.id, r.status);
+  const data = await r.json();
+  return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
 }
 
 function withTimeout(promise, ms) {
@@ -173,7 +278,8 @@ function rememberWorking(id, model) {
 }
 
 async function getCandidates(p, key, forceRefresh) {
-  const c = modelCache[p.id];
+  const ck = p.cacheKey || p.id;
+  const c = modelCache[ck];
   if (!forceRefresh && c && Date.now() - c.at < MODEL_CACHE_MS) return c.models;
 
   let found = [];
@@ -187,7 +293,7 @@ async function getCandidates(p, key, forceRefresh) {
   if (!models.length && c) models = c.models;
   p.fallback.forEach(function (m) { if (models.indexOf(m) === -1) models.push(m); });
 
-  modelCache[p.id] = { at: Date.now(), models: models };
+  modelCache[ck] = { at: Date.now(), models: models };
   return models;
 }
 
