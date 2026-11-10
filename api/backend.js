@@ -9,10 +9,11 @@
 
    Required environment variables (Vercel → Settings →
    Environment Variables):
-     GROQ_KEY
-     OPENROUTER_KEY
-     NVIDIA_KEY
-     GOOGLE_KEY     (optional)
+     GROQ_KEY       (free)
+     OPENROUTER_KEY (free)
+     NVIDIA_KEY     (free)
+     GOOGLE_KEY     (free)
+     ANTHROPIC_KEY  (optional, PAID: Anthropic has no free API tier)
      TAVILY_KEY
      APP_SECRET     (must match the APP_SECRET in index.html)
    ══════════════════════════════════════════════════════════ */
@@ -39,6 +40,62 @@ module.exports = async function handler(req, res) {
 };
 
 /* ── CHAT ─────────────────────────────────────────────────── */
+/* Self-updating providers.
+   Instead of hard-coding model names (which is what broke Gemini),
+   each provider's own "list models" endpoint is asked what exists
+   right now, and the best match is picked by preference. The result
+   is cached for a few hours. If a model ever returns "not found",
+   the list is refreshed immediately and the next candidate is used.
+   Hard-coded names below are only a last-resort fallback. */
+
+const MODEL_CACHE_MS = 6 * 60 * 60 * 1000;
+const modelCache = {}; // providerId -> { at, models: [...] }
+
+const PROVIDERS = [
+  {
+    id: 'groq', env: 'GROQ_KEY', kind: 'openai',
+    url: 'https://api.groq.com/openai/v1/chat/completions',
+    modelsUrl: 'https://api.groq.com/openai/v1/models',
+    fallback: ['llama-3.3-70b-versatile'],
+    prefs: [/llama-3\.3-70b/, /gpt-oss-120b/, /llama.*70b/, /qwen/, /llama/],
+    exclude: /whisper|guard|tts|embed|orpheus|playai|compound|safeguard/i
+  },
+  {
+    id: 'openrouter', env: 'OPENROUTER_KEY', kind: 'openai',
+    url: 'https://openrouter.ai/api/v1/chat/completions',
+    modelsUrl: 'https://openrouter.ai/api/v1/models',
+    onlyFree: true,
+    fallback: ['meta-llama/llama-3.3-70b-instruct:free'],
+    prefs: [/llama-3\.3-70b-instruct/, /gpt-oss-120b/, /qwen.*(235b|72b|32b)/, /deepseek.*(v3|chat)/, /llama.*instruct/, /gemma.*(27b|it)/, /./],
+    exclude: /vision|image|audio|embed|guard|moderation|-vl-|\bvl\b/i
+  },
+  {
+    id: 'nvidia', env: 'NVIDIA_KEY', kind: 'openai',
+    url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    modelsUrl: 'https://integrate.api.nvidia.com/v1/models',
+    fallback: ['meta/llama-3.3-70b-instruct'],
+    prefs: [/llama-3\.3-70b-instruct/, /llama-3\.1-70b-instruct/, /nemotron.*(70b|super)/, /llama.*instruct/, /mistral.*instruct/],
+    exclude: /embed|rerank|guard|vision|vlm|clip|parse|reward|safety|riva|vila|neva|paligemma|fuyu|cosmos|deplot|kosmos|sdxl|stable|flux|nv-/i
+  },
+  {
+    id: 'google', env: 'GOOGLE_KEY', kind: 'gemini',
+    modelsUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
+    fallback: ['gemini-flash-latest'],
+    prefs: [/^gemini-flash-latest$/, /^gemini-[\d.]+-flash$/, /^gemini-[\d.]+-flash-lite$/, /flash/],
+    exclude: /image|live|tts|audio|embed|thinking|vision|robotics|computer|imagen|veo|gemma|transcribe|omni|native|exp|banana/i
+  },
+  {
+    /* Optional and PAID (Anthropic has no free API tier).
+       Only used if ANTHROPIC_KEY is set, and always tried last. */
+    id: 'anthropic', env: 'ANTHROPIC_KEY', kind: 'anthropic',
+    url: 'https://api.anthropic.com/v1/messages',
+    modelsUrl: 'https://api.anthropic.com/v1/models',
+    fallback: ['claude-haiku-5-5'],
+    prefs: [/haiku/, /sonnet/, /opus/],
+    exclude: /^$/
+  }
+];
+
 async function handleChat(body, res) {
   const messages = body.messages;
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -46,43 +103,50 @@ async function handleChat(body, res) {
     return;
   }
 
-  const providers = [
-    { id: 'groq', key: process.env.GROQ_KEY, model: 'llama-3.3-70b-versatile', url: 'https://api.groq.com/openai/v1/chat/completions' },
-    { id: 'openrouter', key: process.env.OPENROUTER_KEY, model: 'meta-llama/llama-3.3-70b-instruct:free', url: 'https://openrouter.ai/api/v1/chat/completions' },
-    { id: 'nvidia', key: process.env.NVIDIA_KEY, model: 'meta/llama-3.3-70b-instruct', url: 'https://integrate.api.nvidia.com/v1/chat/completions' }
-  ];
+  const reasons = [];
+  let anyKey = false;
 
-  let lastError = null;
+  for (let i = 0; i < PROVIDERS.length; i++) {
+    const p = PROVIDERS[i];
+    const key = process.env[p.env];
+    if (!key) continue;
+    anyKey = true;
 
-  for (let i = 0; i < providers.length; i++) {
-    const p = providers[i];
-    if (!p.key) continue;
-    try {
-      const reply = await withTimeout(callOpenAICompatible(p, messages), 20000);
-      if (reply && reply.trim()) {
-        res.status(200).json({ reply: reply });
-        return;
+    const tried = {};
+    let stop = false;
+
+    for (let round = 0; round < 2 && !stop; round++) {
+      const all = await getCandidates(p, key, round === 1);
+      const cands = all.filter(function (m) { return !tried[m]; });
+      if (!cands.length) break;
+
+      let sawModelError = false;
+      for (let j = 0; j < cands.length; j++) {
+        const model = cands[j];
+        tried[model] = true;
+        try {
+          const reply = await withTimeout(callProvider(p, key, model, messages), 15000);
+          if (reply && String(reply).trim()) {
+            rememberWorking(p.id, model);
+            res.status(200).json({ reply: reply });
+            return;
+          }
+          reasons.push(p.id + '_empty_reply');
+        } catch (e) {
+          reasons.push(String((e && e.message) || e));
+          const s = e && e.status;
+          if (s === 401 || s === 403) { stop = true; break; }          // bad key: skip provider
+          if (s === 404 || s === 400 || s === 410) { sawModelError = true; continue; } // model gone: next candidate
+          stop = true; break;                                           // rate limit / outage: next provider
+        }
       }
-    } catch (e) {
-      lastError = e;
-    }
-  }
-
-  if (process.env.GOOGLE_KEY) {
-    try {
-      const reply = await withTimeout(callGemini(messages, process.env.GOOGLE_KEY), 20000);
-      if (reply && reply.trim()) {
-        res.status(200).json({ reply: reply });
-        return;
-      }
-    } catch (e) {
-      lastError = e;
+      if (!sawModelError) break; // only refresh the list when a model was "not found"
     }
   }
 
   res.status(502).json({
     error: 'all_providers_failed',
-    detail: String((lastError && lastError.message) || lastError || 'unknown')
+    detail: anyKey ? (reasons.join('; ') || 'unknown') : 'no_api_keys_set_in_vercel'
   });
 }
 
@@ -95,23 +159,123 @@ function withTimeout(promise, ms) {
   ]);
 }
 
-async function callOpenAICompatible(p, messages) {
-  const reqBody = { model: p.model, messages: messages, max_tokens: 1500 };
-  if (p.model.indexOf(':free') === -1) reqBody.temperature = 0.7;
+function httpError(id, status) {
+  const e = new Error(id + '_http_' + status);
+  e.status = status;
+  return e;
+}
 
-  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + p.key };
+/* ── model discovery ──────────────────────────────────────── */
+function rememberWorking(id, model) {
+  const c = modelCache[id];
+  if (!c) { modelCache[id] = { at: Date.now(), models: [model] }; return; }
+  c.models = [model].concat(c.models.filter(function (m) { return m !== model; }));
+}
+
+async function getCandidates(p, key, forceRefresh) {
+  const c = modelCache[p.id];
+  if (!forceRefresh && c && Date.now() - c.at < MODEL_CACHE_MS) return c.models;
+
+  let found = [];
+  try {
+    found = rankModels(await listModels(p, key), p);
+  } catch (e) {
+    found = []; // discovery failed: fall back to the last known list or the hard-coded names
+  }
+
+  let models = found.slice(0, 3);
+  if (!models.length && c) models = c.models;
+  p.fallback.forEach(function (m) { if (models.indexOf(m) === -1) models.push(m); });
+
+  modelCache[p.id] = { at: Date.now(), models: models };
+  return models;
+}
+
+async function listModels(p, key) {
+  let url = p.modelsUrl;
+  let headers = {};
+  if (p.kind === 'openai') headers = { 'Authorization': 'Bearer ' + key };
+  if (p.kind === 'gemini') url += '?pageSize=200&key=' + encodeURIComponent(key);
+  if (p.kind === 'anthropic') headers = { 'x-api-key': key, 'anthropic-version': '2023-06-01' };
+
+  const r = await withTimeout(fetch(url, { headers: headers }), 4000);
+  if (!r.ok) throw httpError(p.id + '_models', r.status);
+  const data = await r.json();
+
+  if (p.kind === 'gemini') {
+    return (data.models || [])
+      .filter(function (m) { return (m.supportedGenerationMethods || []).indexOf('generateContent') !== -1; })
+      .map(function (m) { return String(m.name || '').replace(/^models\//, ''); });
+  }
+
+  let list = data.data || [];
+  if (p.onlyFree) {
+    list = list.filter(function (m) { return /:free$/.test(m.id || ''); });
+  }
+  return list.map(function (m) { return m.id; }).filter(Boolean);
+}
+
+function rankModels(ids, p) {
+  const ok = ids.filter(function (id) { return !p.exclude.test(id); });
+  const out = [];
+  p.prefs.forEach(function (re) {
+    ok.filter(function (id) { return re.test(id) && out.indexOf(id) === -1; })
+      .sort().reverse() // newest-looking version first
+      .forEach(function (id) { out.push(id); });
+  });
+  return out;
+}
+
+/* ── calling each kind of provider ────────────────────────── */
+async function callProvider(p, key, model, messages) {
+  if (p.kind === 'gemini') return callGemini(messages, key, model);
+  if (p.kind === 'anthropic') return callAnthropic(p, messages, key, model);
+  return callOpenAICompatible(p, key, model, messages);
+}
+
+async function callOpenAICompatible(p, key, model, messages) {
+  const reqBody = { model: model, messages: messages, max_tokens: 1500 };
+  if (model.indexOf(':free') === -1) reqBody.temperature = 0.7;
+
+  const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
   if (p.id === 'openrouter') {
     headers['HTTP-Referer'] = 'https://chaturvedi.app';
     headers['X-Title'] = 'Trishul';
   }
 
   const r = await fetch(p.url, { method: 'POST', headers: headers, body: JSON.stringify(reqBody) });
-  if (!r.ok) throw new Error(p.id + '_http_' + r.status);
+  if (!r.ok) throw httpError(p.id, r.status);
   const data = await r.json();
   return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
 }
 
-async function callGemini(messages, key) {
+async function callAnthropic(p, messages, key, model) {
+  const system = messages.filter(function (m) { return m.role === 'system'; })
+    .map(function (m) { return m.content; }).join('\n\n');
+
+  const turns = [];
+  messages.filter(function (m) { return m.role !== 'system'; }).forEach(function (m) {
+    const role = m.role === 'assistant' ? 'assistant' : 'user';
+    const text = m.content || '';
+    if (turns.length && turns[turns.length - 1].role === role) {
+      turns[turns.length - 1].content += '\n' + text;
+    } else {
+      turns.push({ role: role, content: text });
+    }
+  });
+  if (!turns.length || turns[0].role !== 'user') turns.unshift({ role: 'user', content: '(start)' });
+
+  const r = await fetch(p.url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: model, max_tokens: 1500, system: system || undefined, messages: turns })
+  });
+  if (!r.ok) throw httpError(p.id, r.status);
+  const data = await r.json();
+  return data.content && data.content[0] && data.content[0].text;
+}
+
+async function callGemini(messages, key, model) {
   const sys = messages.find(function (m) { return m.role === 'system'; });
   const rest = messages.filter(function (m) { return m.role !== 'system'; });
 
@@ -133,13 +297,13 @@ async function callGemini(messages, key) {
     }
   });
 
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + key;
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
   const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents: merged, generationConfig: { temperature: 0.7, maxOutputTokens: 1500 } })
   });
-  if (!r.ok) throw new Error('google_http_' + r.status);
+  if (!r.ok) throw httpError('google', r.status);
   const data = await r.json();
   return data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text;
 }
