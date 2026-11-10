@@ -12,7 +12,7 @@
      GROQ_KEY       (free)
      OPENROUTER_KEY (free)
      NVIDIA_KEY     (free)
-     GOOGLE_KEY     (free)
+     GOOGLE_KEY     (free; also powers image analysis and live web search)
      ANTHROPIC_KEY  (optional, PAID: Anthropic has no free API tier)
      TAVILY_KEY
      APP_SECRET     (must match the APP_SECRET in index.html)
@@ -422,29 +422,58 @@ async function handleSearch(body, res) {
     return;
   }
 
-  if (!process.env.TAVILY_KEY) {
-    res.status(200).json({ context: '' });
-    return;
+  let ctx = '';
+  if (process.env.TAVILY_KEY) {
+    try { ctx = await withTimeout(tavilyContext(query), 7000); } catch (e) { ctx = ''; }
   }
+  if (!ctx && process.env.GOOGLE_KEY) {
+    try { ctx = await withTimeout(groundedContext(query), 9000); } catch (e) { ctx = ''; }
+  }
+  res.status(200).json({ context: ctx });
+}
 
-  try {
-    const r = await fetch('https://api.tavily.com/search', {
+async function tavilyContext(query) {
+  const r = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.TAVILY_KEY },
+    body: JSON.stringify({ api_key: process.env.TAVILY_KEY, query: query, max_results: 5, include_answer: true })
+  });
+  if (!r.ok) return '';
+  const data = await r.json();
+  const results = data.results || [];
+  if (!results.length && !data.answer) return '';
+
+  const lines = results.slice(0, 5).map(function (x) {
+    return '- ' + x.title + ' \u2014 ' + x.url + '\n  ' + (x.content || '').slice(0, 220);
+  }).join('\n');
+
+  return '\n\nCurrent information from the web (more recent than your training; trust it over your memory when they conflict):\n'
+    + (data.answer ? 'Summary: ' + data.answer + '\n' : '') + lines;
+}
+
+/* Free fallback: Gemini with Google Search grounding (uses GOOGLE_KEY). */
+async function groundedContext(query) {
+  const base = PROVIDERS.filter(function (p) { return p.id === 'google'; })[0];
+  const p = Object.assign({}, base, { cacheKey: 'google:search' });
+  const today = new Date().toDateString();
+
+  const out = await tryProviders([p], async function (pp, key, model) {
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
+    const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ api_key: process.env.TAVILY_KEY, query: query, max_results: 4, include_answer: true })
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: 'Today is ' + today + '. Using Google Search, give the most current, specific facts (names, teams, dates, numbers) about the following. Facts only, at most 120 words.\n\n' + query }] }],
+        tools: [{ google_search: {} }],
+        generationConfig: { temperature: 0.2, maxOutputTokens: 500 }
+      })
     });
-
-    if (!r.ok) { res.status(200).json({ context: '' }); return; }
-
+    if (!r.ok) throw httpError('google_search', r.status);
     const data = await r.json();
-    if (!data.results || !data.results.length) { res.status(200).json({ context: '' }); return; }
+    const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+    return parts ? parts.map(function (x) { return x.text || ''; }).join('').trim() : '';
+  });
 
-    const lines = data.results.slice(0, 4).map(function (x) {
-      return '- ' + x.title + ' \u2014 ' + x.url + '\n  ' + (x.content || '').slice(0, 180);
-    }).join('\n');
-
-    res.status(200).json({ context: '\n\nCurrent information from the web (more recent than your training, use it):\n' + lines });
-  } catch (e) {
-    res.status(200).json({ context: '' });
-  }
+  if (!out.reply) return '';
+  return '\n\nCurrent information from the web (Google Search; more recent than your training; trust it over your memory when they conflict):\n' + out.reply;
 }
