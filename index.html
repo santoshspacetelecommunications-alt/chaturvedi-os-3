@@ -12,6 +12,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.3/math.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
 *{box-sizing:border-box}
 :root{
@@ -117,6 +120,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:22p
 .image-download svg{width:14px;height:14px}
 .image-error{padding:22px;font-size:13px;color:var(--text-secondary);text-align:center;line-height:1.6}
 
+.file-card{display:flex;align-items:center;gap:12px;max-width:420px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.file-icon{font-size:26px;line-height:1}
+.file-meta{flex:1;min-width:0}
+.file-name{font-size:14px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-sub{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.file-dl{background:var(--accent);color:#fff!important;text-decoration:none!important;font-size:13px;padding:7px 13px;border-radius:9px}
 .attach-row{display:flex;gap:6px;flex-wrap:wrap;max-width:680px;margin:0 auto;padding:0 26px 6px;width:100%}
 .attach-chip{display:flex;align-items:center;gap:7px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:9px;padding:5px 9px;font-size:12px;color:var(--text-secondary)}
 .attach-remove{background:none;border:none;color:var(--text-tertiary);cursor:pointer;font-size:14px;line-height:1;padding:0}
@@ -762,12 +771,12 @@ function handleFiles(files) {
   Array.from(files).forEach(function (file) {
     if (file.size > 8 * 1024 * 1024) return;
     if (file.type.indexOf('image/') === 0) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        pendingAttachments.push({ name: file.name, kind: 'image', content: e.target.result });
+      if (pendingAttachments.filter(function (a) { return a.kind === 'image'; }).length >= 3) return;
+      shrinkImage(file, function (dataUrl) {
+        if (!dataUrl) return;
+        pendingAttachments.push({ name: file.name, kind: 'image', content: dataUrl });
         renderAttachRow();
-      };
-      reader.readAsDataURL(file);
+      });
     } else {
       const reader = new FileReader();
       reader.onload = function (e) {
@@ -791,16 +800,326 @@ function renderAttachRow() {
     row.appendChild(chip);
   });
 }
-function attachmentContext() {
+function attachmentContext(list) {
   let text = '';
-  pendingAttachments.forEach(function (a) {
-    if (a.kind === 'image') {
-      text += '\n\n[Attached image: ' + a.name + ' \u2014 visual analysis isn\u2019t available in this build yet.]';
-    } else {
+  (list || []).forEach(function (a) {
+    if (a.kind === 'text') {
       text += '\n\n[Attached file: ' + a.name + ']\n```\n' + a.content + '\n```\n';
     }
   });
   return text;
+}
+
+/* ══════════════════════════════════════════════════════════
+   IMAGE ANALYSIS — images are shrunk in the browser, then sent
+   to /api/backend (type: 'vision'), which picks a vision model.
+   ══════════════════════════════════════════════════════════ */
+async function askVision(system, prompt, images) {
+  const res = await fetch('/api/backend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Chaturvedi-Key': APP_SECRET },
+    body: JSON.stringify({ type: 'vision', system: system, prompt: prompt, images: images })
+  });
+  if (!res.ok) throw new Error('backend_http_' + res.status);
+  const data = await res.json();
+  if (!data.reply) throw new Error('backend_empty_reply');
+  return data.reply;
+}
+
+function shrinkImage(file, done) {
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const img = new Image();
+    img.onload = function () {
+      const max = 1280;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      done(cv.toDataURL('image/jpeg', 0.82));
+    };
+    img.onerror = function () { done(null); };
+    img.src = e.target.result;
+  };
+  reader.onerror = function () { done(null); };
+  reader.readAsDataURL(file);
+}
+
+/* ══════════════════════════════════════════════════════════
+   FILE CREATION — PowerPoint (.pptx) and Excel (.xlsx).
+   The AI writes a JSON outline, the browser builds the real
+   file with PptxGenJS / SheetJS, and a download card appears.
+   ══════════════════════════════════════════════════════════ */
+const CREATE_VERB = /\b(make|create|generate|build|prepare|draft|design|write|give me|need|want)\b/i;
+const PPT_WORDS = /\b(ppt|pptx|powerpoint|power point|presentation|slide ?deck|slideshow|slides)\b/i;
+const WORD_WORDS = /\b(word (?:doc|document|file)|docx|ms word|microsoft word)\b/i;
+const XLSX_WORDS = /\b(excel|xlsx|spreadsheet|worksheet)\b/i;
+
+function fileIntent(t) {
+  if (/^\s*(how|what|why|explain|can you explain)\b/i.test(t)) return null;
+  if (!CREATE_VERB.test(t)) return null;
+  if (WORD_WORDS.test(t)) return 'docx';
+  if (PPT_WORDS.test(t)) return 'pptx';
+  if (XLSX_WORDS.test(t)) return 'xlsx';
+  return null;
+}
+
+const PPT_SYSTEM = 'You write presentation content. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
+  + '{"title":"...","subtitle":"...","slides":[{"title":"...","bullets":["...","..."],"notes":"..."}]}. '
+  + 'Rules: use the number of slides the person asked for, otherwise 7 content slides (the title slide is added automatically, so do not include it). '
+  + 'Each slide has 3 to 5 short bullets (max 14 words each) with accurate, specific content. If the person gave a structure or topic list, follow it. '
+  + 'notes is 1 to 2 sentences of speaker notes. Plain text only.';
+
+const DOCX_SYSTEM = 'You write Word documents such as reports, essays, letters, notes, assignments and resumes. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
+  + '{"title":"...","subtitle":"...","sections":[{"heading":"...","paragraphs":["..."],"bullets":["..."],"table":{"headers":["..."],"rows":[["..."]]}}]}. '
+  + 'Rules: write full, well-developed paragraphs, not outlines. Match the length to the request (default 4 to 6 sections, about 600 to 900 words). '
+  + 'heading, paragraphs, bullets and table are each optional per section. For a letter, put the subject in title and the salutation, body and closing as paragraphs in one section with no heading. '
+  + 'Plain text only, no markdown symbols like ** or #.';
+
+const XLSX_SYSTEM = 'You design spreadsheets. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
+  + '{"filename":"short_name","sheets":[{"name":"Sheet1","headers":["..."],"rows":[["..."]]}]}. '
+  + 'Numbers must be real JSON numbers, not strings. For totals or calculated columns use Excel formulas as strings starting with = '
+  + '(for example "=SUM(B2:B6)" or "=B2*C2") with correct cell references: row 1 is the headers and data starts on row 2. '
+  + 'Use realistic, useful data for the request, or the data the person attached. At most 200 rows per sheet.';
+
+function parseJsonLoose(s) {
+  const t = String(s).replace(/```json|```/gi, '');
+  const i = t.indexOf('{');
+  const j = t.lastIndexOf('}');
+  if (i < 0 || j <= i) throw new Error('no_json');
+  return JSON.parse(t.slice(i, j + 1));
+}
+
+function safeFileName(s, fallback) {
+  const n = String(s || '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_').slice(0, 50);
+  return n || fallback;
+}
+
+function buildPptx(spec, outType) {
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  const BG = '0F1220', FG = 'F2F3FA', ACC = '7376E8', MUTE = 'A9ADC8';
+
+  const cover = pptx.addSlide();
+  cover.background = { color: BG };
+  cover.addShape(pptx.ShapeType.rect, { x: 0.6, y: 2.5, w: 0.12, h: 2.2, fill: { color: ACC }, line: { color: ACC } });
+  cover.addText(String(spec.title || 'Presentation'), { x: 0.95, y: 2.3, w: 11.6, h: 1.6, fontFace: 'Calibri', fontSize: 40, bold: true, color: FG, valign: 'middle', fit: 'shrink' });
+  if (spec.subtitle) {
+    cover.addText(String(spec.subtitle), { x: 0.95, y: 4.0, w: 11.6, h: 0.8, fontFace: 'Calibri', fontSize: 20, color: MUTE, valign: 'top', fit: 'shrink' });
+  }
+
+  spec.slides.slice(0, 20).forEach(function (sl, idx) {
+    const s = pptx.addSlide();
+    s.background = { color: BG };
+    s.addText(String(sl.title || ''), { x: 0.7, y: 0.45, w: 11.9, h: 1.0, fontFace: 'Calibri', fontSize: 30, bold: true, color: FG, valign: 'middle', fit: 'shrink' });
+    s.addShape(pptx.ShapeType.rect, { x: 0.7, y: 1.5, w: 1.2, h: 0.06, fill: { color: ACC }, line: { color: ACC } });
+    const bullets = (Array.isArray(sl.bullets) ? sl.bullets : []).slice(0, 7).map(function (b) {
+      return { text: String(b), options: { bullet: true, breakLine: true } };
+    });
+    if (bullets.length) {
+      s.addText(bullets, { x: 0.8, y: 1.85, w: 11.7, h: 4.9, fontFace: 'Calibri', fontSize: 22, color: FG, valign: 'top', paraSpaceAfter: 12, fit: 'shrink' });
+    }
+    s.addText(String(idx + 2), { x: 12.2, y: 6.95, w: 0.6, h: 0.3, fontSize: 11, color: MUTE, align: 'right' });
+    if (sl.notes) s.addNotes(String(sl.notes));
+  });
+
+  return pptx.write({ outputType: outType || 'blob' });
+}
+
+function buildXlsx(spec, outType) {
+  const wb = XLSX.utils.book_new();
+  const used = {};
+  spec.sheets.slice(0, 8).forEach(function (sh, idx) {
+    const aoa = [Array.isArray(sh.headers) ? sh.headers : []].concat(Array.isArray(sh.rows) ? sh.rows.slice(0, 200) : []);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    Object.keys(ws).forEach(function (k) {
+      if (k.charAt(0) === '!') return;
+      const c = ws[k];
+      if (c && c.t === 's' && typeof c.v === 'string' && c.v.charAt(0) === '=' && c.v.length > 1) {
+        ws[k] = { t: 'n', f: c.v.slice(1) };
+      }
+    });
+
+    const widths = [];
+    aoa.forEach(function (row) {
+      (row || []).forEach(function (v, i) {
+        const len = String(v == null ? '' : v).length;
+        widths[i] = Math.max(widths[i] || 8, Math.min(len + 2, 50));
+      });
+    });
+    ws['!cols'] = widths.map(function (w) { return { wch: w }; });
+
+    let name = String(sh.name || ('Sheet' + (idx + 1))).replace(/[\[\]:*?\/\\]/g, '').slice(0, 31) || ('Sheet' + (idx + 1));
+    while (used[name.toLowerCase()]) name = (name.slice(0, 28) + '_' + (idx + 1));
+    used[name.toLowerCase()] = true;
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  });
+  return XLSX.write(wb, { bookType: 'xlsx', type: outType || 'array' });
+}
+
+function docxTable(D, t) {
+  const headers = Array.isArray(t.headers) ? t.headers : [];
+  const rows = Array.isArray(t.rows) ? t.rows.slice(0, 60) : [];
+  let n = headers.length;
+  rows.forEach(function (r) { if (Array.isArray(r) && r.length > n) n = r.length; });
+  n = Math.max(1, Math.min(n, 8));
+  const w = Math.floor(9026 / n);
+  const side = { style: D.BorderStyle.SINGLE, size: 4, color: 'BBBBBB' };
+  const borders = { top: side, bottom: side, left: side, right: side };
+  function cell(txt, head) {
+    return new D.TableCell({
+      borders: borders,
+      width: { size: w, type: D.WidthType.DXA },
+      shading: head ? { fill: 'E6E9FA', type: D.ShadingType.CLEAR, color: 'auto' } : undefined,
+      margins: { top: 80, bottom: 80, left: 120, right: 120 },
+      children: [new D.Paragraph({ children: [new D.TextRun({ text: String(txt == null ? '' : txt), bold: !!head })] })]
+    });
+  }
+  const trs = [];
+  if (headers.length) {
+    trs.push(new D.TableRow({ tableHeader: true, children: headers.slice(0, n).map(function (h) { return cell(h, true); }) }));
+  }
+  rows.forEach(function (r) {
+    const cells = [];
+    for (let i = 0; i < n; i++) cells.push(cell(Array.isArray(r) ? r[i] : '', false));
+    trs.push(new D.TableRow({ children: cells }));
+  });
+  return new D.Table({ width: { size: w * n, type: D.WidthType.DXA }, columnWidths: new Array(n).fill(w), rows: trs });
+}
+
+function buildDocx(spec, outType) {
+  const D = docx;
+  const kids = [];
+  kids.push(new D.Paragraph({ heading: D.HeadingLevel.TITLE, children: [new D.TextRun({ text: String(spec.title || 'Document') })] }));
+  if (spec.subtitle) {
+    kids.push(new D.Paragraph({ spacing: { after: 300 }, children: [new D.TextRun({ text: String(spec.subtitle), color: '666666', size: 26 })] }));
+  }
+
+  spec.sections.slice(0, 30).forEach(function (sec) {
+    if (sec.heading) {
+      kids.push(new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: String(sec.heading) })] }));
+    }
+    (Array.isArray(sec.paragraphs) ? sec.paragraphs : []).forEach(function (t) {
+      kids.push(new D.Paragraph({ spacing: { after: 140, line: 300 }, children: [new D.TextRun({ text: String(t) })] }));
+    });
+    (Array.isArray(sec.bullets) ? sec.bullets : []).forEach(function (t) {
+      kids.push(new D.Paragraph({ numbering: { reference: 'bul', level: 0 }, spacing: { after: 80 }, children: [new D.TextRun({ text: String(t) })] }));
+    });
+    if (sec.table && (Array.isArray(sec.table.headers) || Array.isArray(sec.table.rows))) {
+      kids.push(docxTable(D, sec.table));
+      kids.push(new D.Paragraph({ spacing: { after: 160 }, children: [] }));
+    }
+  });
+
+  const doc = new D.Document({
+    creator: 'Trishul',
+    title: String(spec.title || 'Document'),
+    styles: {
+      default: { document: { run: { font: 'Calibri', size: 22 } } },
+      paragraphStyles: [
+        { id: 'Title', name: 'Title', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { size: 48, bold: true, color: '1F2A5C', font: 'Calibri' }, paragraph: { spacing: { after: 120 } } },
+        { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true,
+          run: { size: 30, bold: true, color: '2B3A8F', font: 'Calibri' }, paragraph: { spacing: { before: 300, after: 120 }, outlineLevel: 0 } }
+      ]
+    },
+    numbering: { config: [{ reference: 'bul', levels: [{
+      level: 0, format: D.LevelFormat.BULLET, text: '\u2022', alignment: D.AlignmentType.LEFT,
+      style: { paragraph: { indent: { left: 720, hanging: 360 } } }
+    }] }] },
+    sections: [{
+      properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+      children: kids
+    }]
+  });
+  return outType === 'buffer' ? D.Packer.toBuffer(doc) : D.Packer.toBlob(doc);
+}
+
+function addFileCard(kind, filename, blob, summary) {
+  const stream = document.getElementById('stream');
+  const url = URL.createObjectURL(blob);
+  const wrap = el('div', 'msg assistant file-card');
+  wrap.innerHTML = '<div class="file-icon">' + (kind === 'pptx' ? '\uD83D\uDCCA' : (kind === 'docx' ? '\uD83D\uDCDD' : '\uD83D\uDCC8')) + '</div>'
+    + '<div class="file-meta"><div class="file-name">' + escapeHtml(filename) + '</div>'
+    + '<div class="file-sub">' + escapeHtml(summary) + '</div></div>';
+  const a = el('a', 'file-dl', 'Download');
+  a.href = url;
+  a.download = filename;
+  wrap.appendChild(a);
+  stream.appendChild(wrap);
+  scrollToEnd();
+  try { a.click(); } catch (e) {}
+}
+
+async function createFileFlow(kind, text, attached) {
+  const thinking = addThinking();
+  setOrbState('thinking');
+
+  const ctx = attachmentContext(attached);
+  const recent = history.slice(-7, -1).map(function (m) { return { role: m.role, content: m.content }; });
+  const msgs = [{ role: 'system', content: kind === 'pptx' ? PPT_SYSTEM : (kind === 'docx' ? DOCX_SYSTEM : XLSX_SYSTEM) }]
+    .concat(recent, [{ role: 'user', content: text + ctx }]);
+
+  let intro = '';
+  let note = '';
+  let failed = false;
+
+  try {
+    if (kind === 'pptx' && typeof PptxGenJS === 'undefined') throw new Error('lib_missing');
+    if (kind === 'xlsx' && typeof XLSX === 'undefined') throw new Error('lib_missing');
+    if (kind === 'docx' && typeof docx === 'undefined') throw new Error('lib_missing');
+
+    const spec = parseJsonLoose(await askAI(msgs));
+
+    if (kind === 'pptx') {
+      if (!spec || !Array.isArray(spec.slides) || !spec.slides.length) throw new Error('bad_spec');
+      const blob = await buildPptx(spec, 'blob');
+      const name = safeFileName(spec.title, 'presentation') + '.pptx';
+      const count = Math.min(spec.slides.length, 20) + 1;
+      thinking.remove();
+      addFileCard('pptx', name, blob, count + ' slides \u00b7 PowerPoint');
+      intro = 'Your presentation is ready, buddy \u2014 ' + count + ' slides with speaker notes. It opens in PowerPoint, Google Slides or Keynote.';
+      note = '[Created a PowerPoint: ' + String(spec.title || '').slice(0, 60) + ', ' + count + ' slides]';
+    } else if (kind === 'docx') {
+      if (!spec || !Array.isArray(spec.sections) || !spec.sections.length) throw new Error('bad_spec');
+      const blob = await buildDocx(spec, 'blob');
+      const name = safeFileName(spec.title, 'document') + '.docx';
+      thinking.remove();
+      addFileCard('docx', name, blob, Math.min(spec.sections.length, 30) + ' sections \u00b7 Word');
+      intro = 'Your Word document is ready, buddy. It opens in Word, Google Docs or LibreOffice, and you can edit everything.';
+      note = '[Created a Word document: ' + String(spec.title || '').slice(0, 60) + ']';
+    } else {
+      if (!spec || !Array.isArray(spec.sheets) || !spec.sheets.length) throw new Error('bad_spec');
+      const data = buildXlsx(spec, 'array');
+      const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const name = safeFileName(spec.filename || (spec.sheets[0] && spec.sheets[0].name), 'spreadsheet') + '.xlsx';
+      thinking.remove();
+      addFileCard('xlsx', name, blob, Math.min(spec.sheets.length, 8) + ' sheet(s) \u00b7 Excel');
+      intro = 'Your spreadsheet is ready, buddy. Formulas are live, so you can edit the numbers and the totals will update.';
+      note = '[Created an Excel file: ' + name + ']';
+    }
+  } catch (e) {
+    failed = true;
+    thinking.remove();
+    intro = (e && e.message === 'lib_missing')
+      ? 'I couldn\u2019t load the file maker just now, buddy \u2014 check your connection, reload the page and try again.'
+      : 'I couldn\u2019t build that file this time, buddy \u2014 try again, or tell me the topic and how many slides or sheets you want.';
+    note = intro;
+  }
+
+  addAssistantMessage(intro);
+  history.push({ role: 'assistant', content: note });
+  persistTurn('assistant', note);
+  if (voiceOn) speak(failed ? 'Sorry buddy, that did not work. Try again.' : 'Your file is ready, buddy.');
+  else setOrbState('idle');
+  busy = false;
+  updateComposerState();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -837,6 +1156,14 @@ async function sendMessage(rawText) {
     return;
   }
 
+  const imgs = attachedNow.filter(function (a) { return a.kind === 'image'; }).map(function (a) { return a.content; });
+
+  const fileKind = fileIntent(text);
+  if (fileKind && !imgs.length) {
+    await createFileFlow(fileKind, text, attachedNow);
+    return;
+  }
+
   const thinking = addThinking();
   setOrbState('thinking');
 
@@ -845,7 +1172,7 @@ async function sendMessage(rawText) {
   const mathAns = quickMath(text);
   if (mathAns) addQuickAnswer(mathAns.label + ' = ' + mathAns.value);
 
-  const attachCtx = attachmentContext();
+  const attachCtx = attachmentContext(attachedNow);
 
   const apiHistory = history.slice(-16).map(function (m) { return { role: m.role, content: m.content }; });
   if (apiHistory.length) {
@@ -855,10 +1182,18 @@ async function sendMessage(rawText) {
 
   let reply;
   try {
-    reply = await askAI(msgs);
+    if (imgs.length) {
+      const earlier = history.slice(-7, -1).map(function (m) {
+        return (m.role === 'user' ? 'Person: ' : 'Trishul: ') + String(m.content).slice(0, 300);
+      }).join('\n');
+      const visionSystem = systemPrompt(text) + '\n\nThe person attached ' + imgs.length + ' image(s). Look carefully and answer from what you actually see; if something is unclear or cut off, say so instead of guessing.';
+      reply = await askVision(visionSystem, (earlier ? 'Earlier in this chat:\n' + earlier + '\n\n' : '') + text + liveCtx + attachCtx, imgs);
+    } else {
+      reply = await askAI(msgs);
+    }
     if (!reply) reply = 'I didn\u2019t quite catch that, buddy \u2014 could you try again?';
   } catch (e) {
-    reply = 'I\u2019m having trouble reaching my reasoning engine right now, buddy. Give it a moment and try again.';
+    reply = imgs.length ? 'I couldn\u2019t look at that image just now, buddy \u2014 try again in a moment, or try a smaller picture.' : 'I\u2019m having trouble reaching my reasoning engine right now, buddy. Give it a moment and try again.';
   }
 
   thinking.remove();
