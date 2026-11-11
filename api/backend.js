@@ -98,6 +98,73 @@ const PROVIDERS = [
   }
 ];
 
+/* ── SWAROOPS (modes) ─────────────────────────────────────
+   Spark  = fastest: small, quick models, short answers.
+   Stride = balanced everyday default.
+   Summit = deepest: strongest models, step-by-step reasoning,
+            long answers, longer time allowed.
+   They change the real model choice, provider order, answer
+   length budget, temperature and instructions: not just a label. */
+const MODES = {
+  spark: {
+    tier: 'fast', maxTokens: 700, temp: 0.5, timeoutMs: 12000,
+    order: ['groq', 'google', 'openrouter', 'nvidia', 'anthropic'],
+    hint: 'Mode: Spark (fast). Lead with the answer and keep it brief, under about 120 words, unless the task genuinely needs more (code, steps, files). No preamble and no recap.'
+  },
+  stride: {
+    tier: 'balanced', maxTokens: 1500, temp: 0.7, timeoutMs: 20000,
+    order: ['groq', 'openrouter', 'nvidia', 'google', 'anthropic'],
+    hint: ''
+  },
+  summit: {
+    tier: 'deep', maxTokens: 3500, temp: 0.4, timeoutMs: 40000,
+    order: ['anthropic', 'google', 'groq', 'nvidia', 'openrouter'],
+    hint: 'Mode: Summit (deep). Work through the problem carefully before you answer: consider edge cases and alternative explanations, check numbers and logic, and give a thorough, well-structured answer. Say clearly what you are unsure about.'
+  }
+};
+
+const TIERS = {
+  groq: {
+    fast: { prefs: [/llama-3\.1-8b/, /\b8b\b/, /gemma/, /llama/], fallback: ['llama-3.1-8b-instant'] },
+    deep: { prefs: [/gpt-oss-120b/, /llama-3\.3-70b/, /llama-4/, /qwen.*32b/, /llama.*70b/], fallback: ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile'] }
+  },
+  openrouter: {
+    fast: { prefs: [/llama-3\.[12]-(1b|3b|8b)/, /gemma.*(1b|3n|4b|9b)/, /mistral.*(7b|nemo|small)/, /./], fallback: ['meta-llama/llama-3.2-3b-instruct:free'] },
+    deep: { prefs: [/gpt-oss-120b/, /qwen.*(235b|480b)/, /deepseek.*(r1|v3)/, /llama-3\.1-405b/, /llama-3\.3-70b/, /llama.*70b/], fallback: ['openai/gpt-oss-120b:free', 'meta-llama/llama-3.3-70b-instruct:free'] }
+  },
+  nvidia: {
+    fast: { prefs: [/llama-3\.1-8b-instruct/, /llama.*(8b|3b)-instruct/, /mistral.*(7b|nemo)/, /nemotron.*nano/], fallback: ['meta/llama-3.1-8b-instruct'] },
+    deep: { prefs: [/llama-3\.1-405b-instruct/, /nemotron.*(ultra|super)/, /deepseek.*(r1|v3)/, /qwen.*(235b|397b|72b)/, /llama-3\.3-70b-instruct/], fallback: ['meta/llama-3.1-405b-instruct', 'meta/llama-3.3-70b-instruct'] }
+  },
+  google: {
+    fast: { prefs: [/^gemini-flash-lite-latest$/, /^gemini-[\d.]+-flash-lite$/, /^gemini-flash-latest$/, /flash/], fallback: ['gemini-flash-lite-latest', 'gemini-flash-latest'] },
+    deep: { prefs: [/^gemini-pro-latest$/, /^gemini-[\d.]+-pro$/, /pro/], fallback: ['gemini-pro-latest', 'gemini-flash-latest'] }
+  },
+  anthropic: {
+    fast: { prefs: [/haiku/], fallback: ['claude-haiku-5-5'] },
+    deep: { prefs: [/opus/, /sonnet/], fallback: ['claude-opus-5-5', 'claude-sonnet-5-5'] }
+  }
+};
+
+function providersForMode(modeKey) {
+  const M = MODES[modeKey] || MODES.stride;
+  const out = [];
+  M.order.forEach(function (id) {
+    const base = PROVIDERS.filter(function (p) { return p.id === id; })[0];
+    if (!base) return;
+    const t = (M.tier === 'balanced' ? {} : ((TIERS[id] || {})[M.tier] || {}));
+    out.push(Object.assign({}, base, {
+      prefs: t.prefs || base.prefs,
+      fallback: t.fallback || base.fallback,
+      cacheKey: id + ':' + (MODES[modeKey] ? modeKey : 'stride'),
+      maxTokens: M.maxTokens,
+      temp: M.temp,
+      timeoutMs: M.timeoutMs
+    }));
+  });
+  return out;
+}
+
 async function tryProviders(list, caller) {
   const reasons = [];
   let anyKey = false;
@@ -121,10 +188,10 @@ async function tryProviders(list, caller) {
         const model = cands[j];
         tried[model] = true;
         try {
-          const reply = await withTimeout(caller(p, key, model), 20000);
+          const reply = await withTimeout(caller(p, key, model), p.timeoutMs || 20000);
           if (reply && String(reply).trim()) {
             rememberWorking(p.cacheKey || p.id, model);
-            return { reply: reply };
+            return { reply: reply, provider: p.id, model: model };
           }
           reasons.push(p.id + '_empty_reply');
         } catch (e) {
@@ -151,10 +218,33 @@ async function handleChat(body, res) {
     res.status(400).json({ error: 'bad_request', detail: 'messages array required' });
     return;
   }
-  const out = await tryProviders(PROVIDERS, function (p, key, model) {
-    return callProvider(p, key, model, messages);
+  const modeKey = MODES[body.mode] ? body.mode : 'stride';
+  // Fast, small models write poor documents, so Spark steps up to Stride when creating files.
+  const effKey = (body.purpose === 'create' && modeKey === 'spark') ? 'stride' : modeKey;
+  const M = MODES[effKey];
+  const providers = providersForMode(effKey);
+
+  const mt = Number(body.maxTokens);
+  if (isFinite(mt) && mt >= 200) {
+    providers.forEach(function (p) { p.maxTokens = Math.min(4000, Math.round(mt)); });
+  }
+
+  // The mode's instruction is skipped for file creation, where the reply must be pure JSON.
+  const msgs = messages.slice();
+  if (M.hint && body.purpose !== 'create') {
+    const i = msgs.findIndex(function (m) { return m.role === 'system'; });
+    if (i >= 0) msgs[i] = { role: 'system', content: String(msgs[i].content) + '\n\n' + M.hint };
+    else msgs.unshift({ role: 'system', content: M.hint });
+  }
+
+  const t0 = Date.now();
+  const out = await tryProviders(providers, function (p, key, model) {
+    return callProvider(p, key, model, msgs);
   });
-  if (out.reply) { res.status(200).json({ reply: out.reply }); return; }
+  if (out.reply) {
+    res.status(200).json({ reply: out.reply, meta: { mode: modeKey, provider: out.provider, model: out.model, ms: Date.now() - t0 } });
+    return;
+  }
   res.status(502).json(out);
 }
 
@@ -334,14 +424,14 @@ function rankModels(ids, p) {
 
 /* ── calling each kind of provider ────────────────────────── */
 async function callProvider(p, key, model, messages) {
-  if (p.kind === 'gemini') return callGemini(messages, key, model);
+  if (p.kind === 'gemini') return callGemini(messages, key, model, p);
   if (p.kind === 'anthropic') return callAnthropic(p, messages, key, model);
   return callOpenAICompatible(p, key, model, messages);
 }
 
 async function callOpenAICompatible(p, key, model, messages) {
-  const reqBody = { model: model, messages: messages, max_tokens: 1500 };
-  if (model.indexOf(':free') === -1) reqBody.temperature = 0.7;
+  const reqBody = { model: model, messages: messages, max_tokens: p.maxTokens || 1500 };
+  if (model.indexOf(':free') === -1) reqBody.temperature = p.temp == null ? 0.7 : p.temp;
 
   const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key };
   if (p.id === 'openrouter') {
@@ -374,14 +464,14 @@ async function callAnthropic(p, messages, key, model) {
   const r = await fetch(p.url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: model, max_tokens: 1500, system: system || undefined, messages: turns })
+    body: JSON.stringify({ model: model, max_tokens: p.maxTokens || 1500, system: system || undefined, messages: turns })
   });
   if (!r.ok) throw httpError(p.id, r.status);
   const data = await r.json();
   return data.content && data.content[0] && data.content[0].text;
 }
 
-async function callGemini(messages, key, model) {
+async function callGemini(messages, key, model, p) {
   const sys = messages.find(function (m) { return m.role === 'system'; });
   const rest = messages.filter(function (m) { return m.role !== 'system'; });
 
@@ -407,7 +497,7 @@ async function callGemini(messages, key, model) {
   const r = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: merged, generationConfig: { temperature: 0.7, maxOutputTokens: 1500 } })
+    body: JSON.stringify({ contents: merged, generationConfig: { temperature: p && p.temp != null ? p.temp : 0.7, maxOutputTokens: (p && p.maxTokens) || 1500 } })
   });
   if (!r.ok) throw httpError('google', r.status);
   const data = await r.json();
