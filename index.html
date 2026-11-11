@@ -6,7 +6,7 @@
 <title>Trishul</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Noto+Serif+Devanagari:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -272,6 +272,97 @@ header .hd-left,header .hd-right{display:flex;align-items:center;gap:6px}
 @media(hover:none){.dr-item .x{opacity:.7}}
 .dr-empty{padding:18px 12px;color:var(--text-tertiary);font-size:13px;line-height:1.5}
 @media(prefers-reduced-motion:reduce){.trident *{animation:none!important}}
+.deck{background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px;width:100%;max-width:100%}
+.deck-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.deck-name{font-size:13.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.deck-themes{display:flex;gap:7px;flex-shrink:0}
+.deck-theme{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);cursor:pointer;padding:0}
+.deck-theme.on{border-color:var(--text)}
+.deck-stage{position:relative}
+.deck-view{width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;background:#000}
+.deck-nav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(0,0,0,.5);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+.deck-nav.prev{left:8px}.deck-nav.next{right:8px}
+.deck-thumbs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.deck-thumb{flex:0 0 auto;border:2px solid transparent;border-radius:6px;padding:0;background:none;cursor:pointer;overflow:hidden;position:relative}
+.deck-thumb.on{border-color:var(--accent)}
+.deck-ask{display:flex;gap:8px}
+.deck-input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:13.5px;font-family:inherit}
+.deck-input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.deck-go,.deck-dl{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.deck-go:disabled,.deck-dl:disabled{opacity:.65;cursor:default}
+.deck-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.deck-edit{font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:6px;cursor:pointer}
+.deck-count{font-size:12px;color:var(--text-tertiary)}
+.sl{position:absolute;left:0;top:0;width:1333px;height:750px;transform-origin:0 0;overflow:hidden}
+.sl .e{position:absolute;box-sizing:border-box}
+.sl .t{display:flex;flex-direction:column;width:100%;height:100%;outline:none;word-wrap:break-word}
+.sl [contenteditable="true"]{cursor:text;outline:2px dashed transparent;outline-offset:4px;border-radius:4px}
+.sl [contenteditable="true"]:hover{outline-color:rgba(150,150,150,.55)}
+.sl [contenteditable="true"]:focus{outline:2px solid var(--ac)}
+.sl .bl{position:relative;padding-left:42px}
+.sl .bl::before{content:'';position:absolute;left:8px;top:.5em;width:.3em;height:.3em;border-radius:50%;background:var(--ac)}
+@media(max-width:640px){.deck-actions{justify-content:flex-start}}
+.dv{font-family:'Noto Serif Devanagari','Kohinoor Devanagari','Nirmala UI',Mangal,var(--serif),serif}
+.tabs{display:flex;justify-content:center;gap:4px;padding:0 26px 8px;flex-shrink:0}
+.tab{background:none;border:1px solid transparent;color:var(--text-tertiary);font-family:inherit;font-size:13.5px;padding:6px 16px;border-radius:999px;cursor:pointer;display:flex;align-items:baseline;gap:7px;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.on{background:var(--bg-elevated);color:var(--text);border-color:var(--border)}
+.tab .dv{font-size:16px}
+.tab-sub{font-size:11px;opacity:.65}
+.swaroop-pill{display:flex;align-items:center;gap:6px;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-secondary);font-family:inherit;font-size:12.5px;padding:6px 10px;border-radius:999px;cursor:pointer;transition:all .2s}
+.swaroop-pill:hover{color:var(--text);border-color:var(--accent)}
+.sw-prongs{color:var(--accent);display:flex}
+.swaroop-pop{position:fixed;top:64px;right:16px;width:310px;max-width:calc(100vw - 32px);background:var(--bg-elevated);border:1px solid var(--border);border-radius:16px;padding:8px;z-index:80;box-shadow:var(--shadow)}
+.swaroop-pop[hidden]{display:none}
+.sw-head{font-family:var(--serif);font-size:18px;padding:8px 10px 6px}
+.sw-head span{font-family:inherit;font-size:12px;color:var(--text-tertiary);margin-left:6px}
+.sw-opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:1px solid transparent;color:var(--text);font-family:inherit;padding:10px;border-radius:12px;cursor:pointer}
+.sw-opt:hover{background:var(--bg)}
+.sw-opt.on{background:var(--accent-soft);border-color:var(--accent)}
+.sw-ic{color:var(--accent);margin-top:2px}
+.sw-txt{display:flex;flex-direction:column;gap:2px}
+.sw-txt b{font-size:14.5px;font-weight:600}
+.sw-txt i{font-size:11px;font-style:normal;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.sw-txt em{font-size:12.5px;font-style:normal;color:var(--text-tertiary);line-height:1.4}
+.reply-meta{font-size:11px;color:var(--text-tertiary);margin-top:8px;opacity:.8}
+#kriti{flex:1;overflow-y:auto;display:none;padding:6px 26px 48px}
+body[data-tab="kriti"] #kriti{display:block}
+body[data-tab="kriti"] #stream,body[data-tab="kriti"] #attachRow,body[data-tab="kriti"] #inputBar,body[data-tab="kriti"] .hint{display:none}
+.kr-inner{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.kr-hero{text-align:center;padding:6px 0 2px}
+.kr-title{font-size:46px;line-height:1.15}
+.kr-sub{color:var(--text-tertiary);font-size:14px;margin-top:4px}
+.kr-types{display:flex;gap:10px;flex-wrap:wrap}
+.kr-type{flex:1 1 150px;text-align:left;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);font-family:inherit;border-radius:16px;padding:14px;cursor:pointer;transition:all .2s}
+.kr-type:hover{border-color:var(--accent)}
+.kr-type.on{border-color:var(--accent);background:var(--accent-soft)}
+.kr-type .ic{font-size:22px}
+.kr-type .h{font-size:15px;margin-top:6px}
+.kr-type .d{font-size:12px;color:var(--text-tertiary);margin-top:2px}
+.kr-form{display:flex;flex-direction:column;gap:12px}
+#krPrompt{width:100%;resize:vertical;min-height:84px;background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:12px 14px;font-family:inherit;font-size:14.5px;line-height:1.5}
+#krPrompt:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.kr-opts{display:flex;gap:10px;flex-wrap:wrap}
+.kr-opt{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--text-tertiary);flex:1 1 150px}
+.kr-opt select{background:var(--bg-elevated);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 10px;font-family:inherit;font-size:13.5px}
+.kr-examples{display:flex;gap:7px;flex-wrap:wrap}
+.kr-go{align-self:flex-start;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px 22px;font-size:14px;font-family:inherit;cursor:pointer}
+.kr-go:disabled{opacity:.65;cursor:default}
+.kr-working{display:flex;align-items:center;gap:10px;color:var(--text-secondary);font-size:14px;padding:14px;border:1px dashed var(--border);border-radius:14px}
+.kr-pulse{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:prong 1.1s ease-in-out infinite}
+.kr-note{font-size:13px;color:var(--text-tertiary);margin-bottom:8px}
+.kr-lib-head{font-family:var(--serif);font-size:22px;margin-bottom:8px}
+#krLib{display:flex;flex-direction:column;gap:8px}
+.kr-item{display:flex;align-items:center;gap:12px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:14px;padding:10px 12px}
+.kr-ic{font-size:22px}
+.kr-meta{flex:1;min-width:0}
+.kr-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kr-when{font-size:11.5px;color:var(--text-tertiary);margin-top:2px}
+.kr-open{background:none;border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12.5px;padding:6px 12px;border-radius:9px;cursor:pointer}
+.kr-open:hover{border-color:var(--accent)}
+.kr-del{background:none;border:none;color:var(--text-tertiary);font-size:19px;cursor:pointer;padding:2px 6px}
+.kr-del:hover{color:var(--text)}
+#kriti .msg.assistant{max-width:100%}
 </style>
 </head>
 <body>
@@ -284,6 +375,7 @@ header .hd-left,header .hd-right{display:flex;align-items:center;gap:6px}
       <div class="wordmark"><span id="hdTrident"></span>Trishul<span class="sync-dot" id="syncDot"></span></div>
     </div>
     <div class="hd-right">
+      <button class="swaroop-pill" id="swBtn" aria-haspopup="true" aria-expanded="false" aria-label="Swaroop: how Trishul thinks"></button>
       <button class="icon-btn" id="newBtn" aria-label="New chat">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
@@ -292,8 +384,32 @@ header .hd-left,header .hd-right{display:flex;align-items:center;gap:6px}
       </button>
     </div>
   </header>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+    <button class="tab on" data-tab="chat" role="tab" aria-selected="true">Chat</button>
+    <button class="tab" data-tab="kriti" role="tab" aria-selected="false"><span class="dv">कृति</span><span class="tab-sub">Kriti</span></button>
+  </nav>
+  <div class="swaroop-pop" id="swPop" role="menu" hidden></div>
 
   <main id="stream" aria-live="polite" aria-relevant="additions"></main>
+
+  <section id="kriti" aria-label="Kriti, the creation tab">
+    <div class="kr-inner">
+      <div class="kr-hero"><div class="kr-title dv">कृति</div><div class="kr-sub">Kriti · create slides, documents and sheets</div></div>
+      <div class="kr-types" id="krTypes" role="radiogroup" aria-label="What to create">
+        <button class="kr-type on" data-kind="pptx" role="radio" aria-checked="true"><div class="ic">📊</div><div class="h">Slides</div><div class="d">Designed decks you can edit</div></button>
+        <button class="kr-type" data-kind="docx" role="radio" aria-checked="false"><div class="ic">📝</div><div class="h">Document</div><div class="d">Reports, letters, notes</div></button>
+        <button class="kr-type" data-kind="xlsx" role="radio" aria-checked="false"><div class="ic">📈</div><div class="h">Sheet</div><div class="d">Tables with live formulas</div></button>
+      </div>
+      <div class="kr-form">
+        <textarea id="krPrompt" rows="3" placeholder="What is the presentation about?" spellcheck="false"></textarea>
+        <div class="kr-opts" id="krOpts"></div>
+        <div class="kr-examples" id="krEx"></div>
+        <button class="kr-go" id="krGo">Create</button>
+      </div>
+      <div id="krOut"></div>
+      <div class="kr-lib"><div class="kr-lib-head">Your creations</div><div id="krLib"></div></div>
+    </div>
+  </section>
 
   <div class="attach-row" id="attachRow" hidden></div>
 
@@ -423,15 +539,19 @@ let personalization = '';
    go through these two functions, and the secrets never
    leave the server.
    ══════════════════════════════════════════════════════════ */
-async function askAI(messages) {
+async function askAI(messages, opts) {
+  opts = opts || {};
+  const body = { type: 'chat', messages: messages, mode: currentSwaroop };
+  if (opts.create) { body.purpose = 'create'; body.maxTokens = 3200; }
   const res = await fetch('/api/backend', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Chaturvedi-Key': APP_SECRET },
-    body: JSON.stringify({ type: 'chat', messages: messages })
+    body: JSON.stringify(body)
   });
   if (!res.ok) throw new Error('backend_http_' + res.status);
   const data = await res.json();
   if (!data.reply) throw new Error('backend_empty_reply');
+  lastMeta = data.meta || null;
   return data.reply;
 }
 
@@ -451,8 +571,9 @@ function needsFresh(text) {
   if (/\b[A-Z][a-z]+ [A-Z][a-z]+\b/.test(t)) return true;           // two capitalised words: probably a person or place
   return false;
 }
-async function liveContext(text) {
+async function liveContext(text, o) {
   if (!needsFresh(text)) return '';
+  if (currentSwaroop === 'spark' && !(o && o.force) && !LIVE_PATTERN.test(text)) return '';
   try {
     const res = await fetch('/api/backend', {
       method: 'POST',
@@ -948,12 +1069,6 @@ function fileIntent(t) {
   return null;
 }
 
-const PPT_SYSTEM = 'You write presentation content. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
-  + '{"title":"...","subtitle":"...","slides":[{"title":"...","bullets":["...","..."],"notes":"..."}]}. '
-  + 'Rules: use the number of slides the person asked for, otherwise 7 content slides (the title slide is added automatically, so do not include it). '
-  + 'Each slide has 3 to 5 short bullets (max 14 words each) with accurate, specific content. If the person gave a structure or topic list, follow it. '
-  + 'notes is 1 to 2 sentences of speaker notes. Plain text only.';
-
 const DOCX_SYSTEM = 'You write Word documents such as reports, essays, letters, notes, assignments and resumes. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
   + '{"title":"...","subtitle":"...","sections":[{"heading":"...","paragraphs":["..."],"bullets":["..."],"table":{"headers":["..."],"rows":[["..."]]}}]}. '
   + 'Rules: write full, well-developed paragraphs, not outlines. Match the length to the request (default 4 to 6 sections, about 600 to 900 words). '
@@ -979,36 +1094,6 @@ function safeFileName(s, fallback) {
   return n || fallback;
 }
 
-function buildPptx(spec, outType) {
-  const pptx = new PptxGenJS();
-  pptx.layout = 'LAYOUT_WIDE';
-  const BG = '0F1220', FG = 'F2F3FA', ACC = '7376E8', MUTE = 'A9ADC8';
-
-  const cover = pptx.addSlide();
-  cover.background = { color: BG };
-  cover.addShape(pptx.ShapeType.rect, { x: 0.6, y: 2.5, w: 0.12, h: 2.2, fill: { color: ACC }, line: { color: ACC } });
-  cover.addText(String(spec.title || 'Presentation'), { x: 0.95, y: 2.3, w: 11.6, h: 1.6, fontFace: 'Calibri', fontSize: 40, bold: true, color: FG, valign: 'middle', fit: 'shrink' });
-  if (spec.subtitle) {
-    cover.addText(String(spec.subtitle), { x: 0.95, y: 4.0, w: 11.6, h: 0.8, fontFace: 'Calibri', fontSize: 20, color: MUTE, valign: 'top', fit: 'shrink' });
-  }
-
-  spec.slides.slice(0, 20).forEach(function (sl, idx) {
-    const s = pptx.addSlide();
-    s.background = { color: BG };
-    s.addText(String(sl.title || ''), { x: 0.7, y: 0.45, w: 11.9, h: 1.0, fontFace: 'Calibri', fontSize: 30, bold: true, color: FG, valign: 'middle', fit: 'shrink' });
-    s.addShape(pptx.ShapeType.rect, { x: 0.7, y: 1.5, w: 1.2, h: 0.06, fill: { color: ACC }, line: { color: ACC } });
-    const bullets = (Array.isArray(sl.bullets) ? sl.bullets : []).slice(0, 7).map(function (b) {
-      return { text: String(b), options: { bullet: true, breakLine: true } };
-    });
-    if (bullets.length) {
-      s.addText(bullets, { x: 0.8, y: 1.85, w: 11.7, h: 4.9, fontFace: 'Calibri', fontSize: 22, color: FG, valign: 'top', paraSpaceAfter: 12, fit: 'shrink' });
-    }
-    s.addText(String(idx + 2), { x: 12.2, y: 6.95, w: 0.6, h: 0.3, fontSize: 11, color: MUTE, align: 'right' });
-    if (sl.notes) s.addNotes(String(sl.notes));
-  });
-
-  return pptx.write({ outputType: outType || 'blob' });
-}
 
 function buildXlsx(spec, outType) {
   const wb = XLSX.utils.book_new();
@@ -1114,73 +1199,924 @@ function buildDocx(spec, outType) {
     }] }] },
     sections: [{
       properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
+      footers: { default: new D.Footer({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ children: ['Page ', D.PageNumber.CURRENT], color: '888888', size: 18 })] })] }) },
       children: kids
     }]
   });
   return outType === 'buffer' ? D.Packer.toBuffer(doc) : D.Packer.toBlob(doc);
 }
 
-function addFileCard(kind, filename, blob, summary) {
-  const stream = document.getElementById('stream');
-  const url = URL.createObjectURL(blob);
-  const wrap = el('div', 'msg assistant file-card');
-  wrap.innerHTML = '<div class="file-icon">' + (kind === 'pptx' ? '\uD83D\uDCCA' : (kind === 'docx' ? '\uD83D\uDCDD' : '\uD83D\uDCC8')) + '</div>'
-    + '<div class="file-meta"><div class="file-name">' + escapeHtml(filename) + '</div>'
-    + '<div class="file-sub">' + escapeHtml(summary) + '</div></div>';
-  const a = el('a', 'file-dl', 'Download');
-  a.href = url;
-  a.download = filename;
-  wrap.appendChild(a);
-  stream.appendChild(wrap);
-  scrollToEnd();
-  try { a.click(); } catch (e) {}
+/* ══════════════════════════════════════════════════════════
+   SLIDES ENGINE — one layout source drives both the live
+   preview in the chat and the real .pptx file, so what you
+   see is what you download.  All sizes are in inches / points.
+   ══════════════════════════════════════════════════════════ */
+const HEAD_FONT = 'Georgia';
+const BODY_FONT = 'Calibri';
+const THEMES = {
+  midnight: { name: 'Midnight', bg: '0F1220', fg: 'F2F3FA', muted: 'A9ADC8', accent: '7376E8', card: '191D33', line: '2B3150' },
+  paper:    { name: 'Paper',    bg: 'FAFAF7', fg: '1B1B1F', muted: '6B6B73', accent: '3B5BDB', card: 'EEF0F7', line: 'D9DCE8' },
+  sunrise:  { name: 'Sunrise',  bg: 'FFF6EC', fg: '2B1A12', muted: '8A6A55', accent: 'E8734F', card: 'FFE6D0', line: 'F0D2B8' },
+  forest:   { name: 'Forest',   bg: '0E1A14', fg: 'E8F2EC', muted: '9DB8A8', accent: '3DBE7A', card: '16281F', line: '24402F' },
+  ocean:    { name: 'Ocean',    bg: '08141F', fg: 'E6F1F7', muted: '93B1C2', accent: '3FC6E8', card: '10263A', line: '1C3B55' }
+};
+const DECK_LAYOUTS = ['bullets', 'two_column', 'stats', 'timeline', 'chart', 'table', 'quote', 'section', 'closing'];
+
+function mixHex(a, b, t) {
+  const pa = [0, 2, 4].map(function (i) { return parseInt(a.substr(i, 2), 16); });
+  const pb = [0, 2, 4].map(function (i) { return parseInt(b.substr(i, 2), 16); });
+  return pa.map(function (v, i) {
+    const x = Math.round(v + (pb[i] - v) * t);
+    return ('0' + x.toString(16)).slice(-2);
+  }).join('').toUpperCase();
+}
+function paletteFor(T, n) {
+  const base = [T.accent, mixHex(T.accent, T.fg, 0.4), mixHex(T.accent, T.bg, 0.5), mixHex(T.accent, T.fg, 0.7), mixHex(T.accent, T.bg, 0.25), mixHex(T.accent, T.fg, 0.2)];
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(base[i % base.length]);
+  return out;
 }
 
+/* how big can this text be and still fit its box? */
+function fitPt(lines, wIn, hIn, maxPt, minPt, o) {
+  o = o || {};
+  const cw = o.cw || 0.5, lh = o.lh || 1.25, gap = o.gap == null ? 0.12 : o.gap;
+  for (let pt = maxPt; pt >= minPt; pt--) {
+    const cpl = Math.max(4, Math.floor(((wIn - (o.indent || 0)) / (pt * cw / 72)) * 0.9));
+    let h = 0;
+    lines.forEach(function (t, i) {
+      const n = Math.max(1, Math.ceil(String(t).length / cpl));
+      h += n * pt * lh / 72 + (i < lines.length - 1 ? gap : 0);
+    });
+    if (h <= hIn) return pt;
+  }
+  return minPt;
+}
+
+/* ── normalise whatever the AI sent into a safe deck ─────── */
+function asArr(x) { return Array.isArray(x) ? x.map(function (v) { return String(v == null ? '' : v); }).filter(function (v) { return v.trim(); }) : []; }
+function normDeck(spec) {
+  spec = spec && typeof spec === 'object' ? spec : {};
+  spec.title = String(spec.title || 'Presentation');
+  spec.subtitle = spec.subtitle ? String(spec.subtitle) : '';
+  spec.slides = (Array.isArray(spec.slides) ? spec.slides : []).slice(0, 19).map(function (sl) {
+    sl = sl && typeof sl === 'object' ? sl : {};
+    let L = DECK_LAYOUTS.indexOf(sl.layout) !== -1 ? sl.layout : 'bullets';
+    sl.title = String(sl.title || '');
+    sl.notes = sl.notes ? String(sl.notes) : '';
+    if (L === 'bullets') {
+      sl.bullets = asArr(sl.bullets).slice(0, 7);
+      sl.takeaway = sl.takeaway ? String(sl.takeaway) : '';
+    } else if (L === 'two_column') {
+      ['left', 'right'].forEach(function (k) {
+        const c = sl[k] && typeof sl[k] === 'object' ? sl[k] : {};
+        sl[k] = { heading: String(c.heading || ''), bullets: asArr(c.bullets).slice(0, 6) };
+      });
+    } else if (L === 'stats') {
+      sl.stats = (Array.isArray(sl.stats) ? sl.stats : []).slice(0, 4).map(function (s) {
+        return { value: String(s && s.value != null ? s.value : ''), label: String(s && s.label != null ? s.label : '') };
+      });
+      if (sl.stats.length < 2) { L = 'bullets'; sl.bullets = sl.stats.map(function (s) { return s.value + ' ' + s.label; }); sl.takeaway = ''; }
+    } else if (L === 'timeline') {
+      sl.steps = (Array.isArray(sl.steps) ? sl.steps : []).slice(0, 5).map(function (s) {
+        return { label: String(s && s.label != null ? s.label : ''), text: String(s && s.text != null ? s.text : '') };
+      });
+      if (sl.steps.length < 2) { L = 'bullets'; sl.bullets = sl.steps.map(function (s) { return s.label + ' ' + s.text; }); sl.takeaway = ''; }
+    } else if (L === 'chart') {
+      const c = sl.chart && typeof sl.chart === 'object' ? sl.chart : {};
+      const labels = asArr(c.labels);
+      const values = (Array.isArray(c.values) ? c.values : []).map(Number);
+      const ok = labels.length >= 2 && labels.length === values.length && values.every(function (v) { return isFinite(v); });
+      if (!ok) { L = 'bullets'; sl.bullets = []; sl.takeaway = ''; }
+      else sl.chart = { type: ['bar', 'line', 'pie'].indexOf(c.type) !== -1 ? c.type : 'bar', name: String(c.name || 'Series'), labels: labels.slice(0, 10), values: values.slice(0, 10) };
+    } else if (L === 'table') {
+      const headers = asArr(sl.headers).slice(0, 5);
+      const rows = (Array.isArray(sl.rows) ? sl.rows : []).slice(0, 7).map(function (r) {
+        const row = (Array.isArray(r) ? r : []).slice(0, headers.length || 5).map(function (c) { return String(c == null ? '' : c); });
+        while (headers.length && row.length < headers.length) row.push('');
+        return row;
+      });
+      if (!headers.length || !rows.length) { L = 'bullets'; sl.bullets = []; sl.takeaway = ''; }
+      else { sl.headers = headers; sl.rows = rows; }
+    } else if (L === 'quote') {
+      sl.quote = String(sl.quote || sl.title || ''); sl.by = sl.by ? String(sl.by) : '';
+    } else if (L === 'section' || L === 'closing') {
+      sl.subtitle = sl.subtitle ? String(sl.subtitle) : '';
+    }
+    sl.layout = L;
+    return sl;
+  });
+  return spec;
+}
+function deckSlides(spec) {
+  return [{ layout: 'cover', title: spec.title, subtitle: spec.subtitle, notes: '' }].concat(spec.slides);
+}
+function pickTheme(spec, look) {
+  if (spec && THEMES[spec.theme]) return spec.theme;
+  return ({ ink: 'midnight', ember: 'sunrise', volt: 'ocean', fog: 'paper', nova: 'paper' })[look] || 'midnight';
+}
+
+/* ── layouts: return a flat list of positioned elements ──── */
+function slideElements(sl, T, i, N) {
+  const els = [];
+  // i = deck index (0 is the cover); slide i lives at spec.slides[i-1]
+  const P = function () {
+    const rest = Array.prototype.slice.call(arguments, 1); // first argument is the deck index, already known as i
+    return i === 0 ? rest : ['slides', i - 1].concat(rest);
+  };
+  const R = function (x, y, w, h, fill, o) { return Object.assign({ k: 'rect', x: x, y: y, w: w, h: h, fill: fill }, o || {}); };
+  const Tx = function (x, y, w, h, o) { return Object.assign({ k: 'text', x: x, y: y, w: w, h: h, size: 18, color: T.fg, font: BODY_FONT, align: 'left', valign: 'top' }, o); };
+  const heading = function () {
+    const sz = fitPt([sl.title || ''], 11.7, 1.0, 34, 22, { cw: 0.56, lh: 1.15 });
+    els.push(Tx(0.8, 0.5, 11.7, 1.0, { text: sl.title || '', size: sz, bold: true, font: HEAD_FONT, valign: 'middle', bind: P(i, 'title') }));
+    els.push(R(0.8, 1.58, 1.1, 0.07, T.accent));
+  };
+  const footer = function () {
+    els.push(Tx(12.0, 6.95, 0.55, 0.3, { text: String(i + 1), size: 11, color: T.muted, align: 'right' }));
+  };
+  const L = sl.layout;
+
+  if (L === 'cover' || L === 'closing') {
+    els.push(R(8.8, 1.4, 4.2, 4.2, T.accent, { shape: 'ellipse', alpha: 0.12 }));
+    els.push(R(10.9, 0.5, 1.8, 1.8, T.accent, { shape: 'ellipse', alpha: 0.2 }));
+    els.push(R(0.8, 2.35, 0.12, 2.5, T.accent));
+    const ts = fitPt([sl.title || ''], 7.4, 2.2, 52, 26, { cw: 0.56, lh: 1.15 });
+    els.push(Tx(1.2, 2.15, 7.4, 2.3, { text: sl.title || '', size: ts, bold: true, font: HEAD_FONT, valign: 'middle', bind: P(i, 'title') }));
+    if (sl.subtitle || L === 'cover') {
+      els.push(Tx(1.2, 4.55, 7.4, 1.1, { text: sl.subtitle || '', size: fitPt([sl.subtitle || ' '], 7.4, 1.1, 22, 14), color: T.muted, bind: P(i, 'subtitle') }));
+    }
+    return els;
+  }
+
+  if (L === 'section') {
+    els.push(R(0.8, 2.3, 1.4, 0.08, T.accent));
+    const ts = fitPt([sl.title || ''], 11.7, 1.7, 48, 28, { cw: 0.56, lh: 1.15 });
+    els.push(Tx(0.8, 2.55, 11.7, 1.7, { text: sl.title || '', size: ts, bold: true, font: HEAD_FONT, valign: 'middle', bind: P(i, 'title') }));
+    if (sl.subtitle) els.push(Tx(0.8, 4.4, 10.5, 1.2, { text: sl.subtitle, size: fitPt([sl.subtitle], 10.5, 1.2, 24, 14), color: T.muted, bind: P(i, 'subtitle') }));
+    footer();
+    return els;
+  }
+
+  if (L === 'quote') {
+    els.push(Tx(0.8, 0.55, 2, 2, { text: '\u201C', size: 130, color: T.accent, font: HEAD_FONT, bold: true }));
+    const qs = fitPt([sl.quote || ''], 10.6, 3.1, 36, 18, { cw: 0.5, lh: 1.3 });
+    els.push(Tx(1.5, 1.9, 10.6, 3.3, { text: sl.quote || '', size: qs, italic: true, font: HEAD_FONT, valign: 'middle', bind: P(i, 'quote') }));
+    if (sl.by) {
+      els.push(R(1.5, 5.5, 0.6, 0.05, T.accent));
+      els.push(Tx(1.5, 5.65, 10.6, 0.6, { text: sl.by, size: 18, color: T.muted, bind: P(i, 'by') }));
+    }
+    footer();
+    return els;
+  }
+
+  heading();
+
+  if (L === 'bullets') {
+    const hasK = !!sl.takeaway;
+    const w = hasK ? 7.4 : 11.7;
+    const arr = sl.bullets && sl.bullets.length ? sl.bullets : [' '];
+    const sz = fitPt(arr, w, 4.7, hasK ? 24 : 28, 15, { indent: 0.42, gap: 0.16 });
+    els.push(Tx(0.8, 1.95, w, 4.8, { lines: arr, bullet: true, size: sz, gap: 0.16, kind: 'list', bind: P(i, 'bullets') }));
+    if (hasK) {
+      els.push(R(8.6, 1.95, 3.9, 4.6, T.card, { radius: 0.15 }));
+      els.push(R(8.6, 1.95, 0.08, 4.6, T.accent));
+      els.push(Tx(8.95, 2.25, 3.3, 0.4, { text: 'KEY IDEA', size: 12, bold: true, color: T.accent }));
+      els.push(Tx(8.95, 2.75, 3.3, 3.5, { text: sl.takeaway, size: fitPt([sl.takeaway], 3.3, 3.5, 24, 14, { cw: 0.55, lh: 1.3 }), italic: true, font: HEAD_FONT, bind: P(i, 'takeaway') }));
+    }
+  } else if (L === 'two_column') {
+    [['left', 0.8], ['right', 6.78]].forEach(function (c) {
+      const col = sl[c[0]];
+      els.push(R(c[1], 1.95, 5.75, 4.75, T.card, { radius: 0.15 }));
+      els.push(R(c[1], 1.95, 5.75, 0.08, T.accent));
+      els.push(Tx(c[1] + 0.3, 2.25, 5.15, 0.55, { text: col.heading, size: 22, bold: true, color: T.accent, font: HEAD_FONT, bind: P(i, c[0], 'heading') }));
+      const arr = col.bullets.length ? col.bullets : [' '];
+      els.push(Tx(c[1] + 0.3, 3.0, 5.15, 3.5, { lines: arr, bullet: true, size: fitPt(arr, 5.15, 3.5, 22, 13, { indent: 0.42, gap: 0.14 }), gap: 0.14, kind: 'list', bind: P(i, c[0], 'bullets') }));
+    });
+  } else if (L === 'stats') {
+    const n = sl.stats.length, gap = 0.3, w = (11.7 - (n - 1) * gap) / n;
+    sl.stats.forEach(function (s, j) {
+      const x = 0.8 + j * (w + gap);
+      els.push(R(x, 2.1, w, 4.2, T.card, { radius: 0.15 }));
+      els.push(R(x + w / 2 - 0.4, 2.1, 0.8, 0.08, T.accent));
+      els.push(Tx(x, 2.6, w, 1.5, { text: s.value, size: fitPt([s.value], w - 0.3, 1.5, 64, 24, { cw: 0.58, lh: 1.1 }), bold: true, color: T.accent, font: HEAD_FONT, align: 'center', valign: 'middle', bind: P(i, 'stats', j, 'value') }));
+      els.push(Tx(x + 0.25, 4.3, w - 0.5, 1.7, { text: s.label, size: fitPt([s.label], w - 0.5, 1.7, 20, 13, { lh: 1.3 }), color: T.muted, align: 'center', bind: P(i, 'stats', j, 'label') }));
+    });
+  } else if (L === 'timeline') {
+    const n = sl.steps.length, w = 11.7 / n;
+    els.push(R(0.8 + w / 2, 3.18, 11.7 - w, 0.05, T.line));
+    sl.steps.forEach(function (s, j) {
+      const cx = 0.8 + j * w + w / 2;
+      els.push(R(cx - 0.3, 2.95, 0.6, 0.6, T.accent, { shape: 'ellipse' }));
+      els.push(Tx(cx - 0.3, 2.95, 0.6, 0.6, { text: String(j + 1), size: 18, bold: true, color: T.bg, align: 'center', valign: 'middle' }));
+      els.push(Tx(cx - w / 2 + 0.1, 3.85, w - 0.2, 0.6, { text: s.label, size: fitPt([s.label], w - 0.2, 0.6, 22, 13, { cw: 0.55 }), bold: true, align: 'center', font: HEAD_FONT, bind: P(i, 'steps', j, 'label') }));
+      els.push(Tx(cx - w / 2 + 0.15, 4.55, w - 0.3, 2.1, { text: s.text, size: fitPt([s.text], w - 0.3, 2.1, 18, 12, { lh: 1.3 }), color: T.muted, align: 'center', bind: P(i, 'steps', j, 'text') }));
+    });
+  } else if (L === 'table') {
+    const rowH = Math.min(0.62, 4.6 / (sl.rows.length + 1));
+    els.push({ k: 'table', x: 0.8, y: 1.95, w: 11.7, rowH: rowH, headers: sl.headers, rows: sl.rows, size: sl.rows.length > 5 || sl.headers.length > 4 ? 15 : 18, base: P(i) });
+  } else if (L === 'chart') {
+    els.push(R(0.8, 1.95, 11.7, 4.75, T.card, { radius: 0.15 }));
+    els.push({ k: 'chart', x: 1.0, y: 2.1, w: 11.3, h: 4.45, type: sl.chart.type, name: sl.chart.name, labels: sl.chart.labels, values: sl.chart.values });
+  }
+  footer();
+  return els;
+}
+
+/* ── renderer 1: real .pptx via PptxGenJS ────────────────── */
+function addPptxEl(pptx, s, e, T) {
+  if (e.k === 'rect') {
+    const type = e.shape === 'ellipse' ? pptx.ShapeType.ellipse : (e.radius ? pptx.ShapeType.roundRect : pptx.ShapeType.rect);
+    const o = { x: e.x, y: e.y, w: e.w, h: e.h, fill: { color: e.fill, transparency: e.alpha != null ? Math.round((1 - e.alpha) * 100) : 0 }, line: { type: 'none' } };
+    if (e.radius && type === pptx.ShapeType.roundRect) o.rectRadius = e.radius;
+    s.addShape(type, o);
+  } else if (e.k === 'text') {
+    const base = { x: e.x, y: e.y, w: e.w, h: e.h, fontFace: e.font, fontSize: e.size, bold: !!e.bold, italic: !!e.italic, color: e.color, align: e.align, valign: e.valign === 'middle' ? 'middle' : 'top', margin: 0, fit: 'none' };
+    if (e.lines) {
+      s.addText(e.lines.map(function (t) {
+        return { text: String(t), options: { bullet: { indent: 30 }, breakLine: true, paraSpaceAfter: Math.round((e.gap || 0.12) * 72) } };
+      }), base);
+    } else {
+      s.addText(String(e.text || ''), base);
+    }
+  } else if (e.k === 'table') {
+    const n = e.headers.length;
+    const head = e.headers.map(function (h) { return { text: h, options: { bold: true, color: 'FFFFFF', fill: { color: T.accent }, fontFace: BODY_FONT, fontSize: e.size, align: 'left', valign: 'middle' } }; });
+    const body = e.rows.map(function (r, ri) {
+      return r.map(function (c) { return { text: c, options: { color: T.fg, fill: { color: ri % 2 === 0 ? T.card : T.bg }, fontFace: BODY_FONT, fontSize: e.size, align: 'left', valign: 'middle' } }; });
+    });
+    s.addTable([head].concat(body), { x: e.x, y: e.y, w: e.w, colW: new Array(n).fill(e.w / n), rowH: e.rowH, border: { type: 'solid', pt: 0.75, color: T.line }, margin: [0.05, 0.15, 0.05, 0.15] });
+  } else if (e.k === 'chart') {
+    const type = e.type === 'pie' ? pptx.charts.PIE : (e.type === 'line' ? pptx.charts.LINE : pptx.charts.BAR);
+    const opts = {
+      x: e.x, y: e.y, w: e.w, h: e.h,
+      chartColors: e.type === 'pie' ? paletteFor(T, e.labels.length) : [T.accent],
+      showLegend: e.type === 'pie', legendPos: 'r', legendColor: T.fg, legendFontSize: 14, legendFontFace: BODY_FONT,
+      showValue: true, dataLabelColor: e.type === 'pie' ? 'FFFFFF' : T.fg, dataLabelFontSize: 13, dataLabelFontFace: BODY_FONT
+    };
+    if (e.type !== 'pie') {
+      Object.assign(opts, { catAxisLabelColor: T.muted, valAxisLabelColor: T.muted, catAxisLabelFontSize: 14, valAxisLabelFontSize: 12, catAxisLabelFontFace: BODY_FONT, valAxisLabelFontFace: BODY_FONT, valGridLine: { color: T.line, size: 0.5 }, catGridLine: { style: 'none' } });
+      if (e.type === 'bar') { opts.barDir = 'col'; opts.barGapWidthPct = 60; }
+      if (e.type === 'line') { opts.lineSize = 3; opts.lineDataSymbolSize = 9; }
+    }
+    s.addChart(type, [{ name: e.name || 'Series', labels: e.labels, values: e.values }], opts);
+  }
+}
+function buildPptxDeck(spec, themeKey, outType) {
+  const T = THEMES[themeKey] || THEMES.midnight;
+  const slides = deckSlides(spec);
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.title = spec.title;
+  pptx.author = 'Trishul';
+  slides.forEach(function (sl, i) {
+    const s = pptx.addSlide();
+    s.background = { color: T.bg };
+    slideElements(sl, T, i, slides.length).forEach(function (e) { addPptxEl(pptx, s, e, T); });
+    if (sl.notes) s.addNotes(sl.notes);
+  });
+  return pptx.write({ outputType: outType || 'blob' });
+}
+
+/* ── renderer 2: live HTML preview (1333 x 750 px, 100 px = 1 inch) ── */
+function deckEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function chartSVG(e, T) {
+  const W = Math.round(e.w * 100), H = Math.round(e.h * 100), n = e.labels.length, vals = e.values;
+  let s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" style="font-family:Calibri,Arial,sans-serif">';
+  if (e.type === 'pie') {
+    const cx = W * 0.32, cy = H / 2, r = Math.min(W * 0.28, H * 0.42), pal = paletteFor(T, n);
+    const tot = vals.reduce(function (a, b) { return a + Math.max(0, b); }, 0) || 1;
+    let a0 = -Math.PI / 2;
+    vals.forEach(function (v, j) {
+      const a1 = a0 + Math.max(0, v) / tot * 2 * Math.PI, large = a1 - a0 > Math.PI ? 1 : 0;
+      const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0), x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
+      s += '<path d="M' + cx + ',' + cy + ' L' + x0.toFixed(1) + ',' + y0.toFixed(1) + ' A' + r + ',' + r + ' 0 ' + large + ' 1 ' + x1.toFixed(1) + ',' + y1.toFixed(1) + ' Z" fill="#' + pal[j] + '" stroke="#' + T.card + '" stroke-width="3"/>';
+      a0 = a1;
+    });
+    e.labels.forEach(function (l, j) {
+      const y = H / 2 - n * 19 + j * 38;
+      s += '<rect x="' + (W * 0.66) + '" y="' + y + '" width="18" height="18" rx="4" fill="#' + pal[j] + '"/>'
+        + '<text x="' + (W * 0.66 + 30) + '" y="' + (y + 15) + '" font-size="22" fill="#' + T.fg + '">' + deckEsc(l) + ' (' + vals[j] + ')</text>';
+    });
+  } else {
+    const pl = 70, pr = 20, pt = 30, pb = 56, iw = W - pl - pr, ih = H - pt - pb;
+    const max = Math.max.apply(null, vals.concat([1])), step = iw / n;
+    for (let g = 0; g <= 4; g++) {
+      const y = pt + ih - ih * g / 4;
+      s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y + '" y2="' + y + '" stroke="#' + T.line + '" stroke-width="1"/>'
+        + '<text x="' + (pl - 10) + '" y="' + (y + 5) + '" font-size="16" text-anchor="end" fill="#' + T.muted + '">' + Math.round(max * g / 4 * 10) / 10 + '</text>';
+    }
+    const pts = [];
+    vals.forEach(function (v, j) {
+      const cx = pl + step * j + step / 2, h = ih * Math.max(0, v) / max, y = pt + ih - h;
+      if (e.type === 'bar') {
+        const bw = Math.min(step * 0.6, 120);
+        s += '<rect x="' + (cx - bw / 2) + '" y="' + y + '" width="' + bw + '" height="' + h + '" rx="4" fill="#' + T.accent + '"/>';
+      } else pts.push(cx + ',' + y);
+      s += '<text x="' + cx + '" y="' + (y - 10) + '" font-size="16" text-anchor="middle" fill="#' + T.fg + '">' + v + '</text>'
+        + '<text x="' + cx + '" y="' + (H - 22) + '" font-size="18" text-anchor="middle" fill="#' + T.muted + '">' + deckEsc(e.labels[j]) + '</text>';
+    });
+    if (e.type === 'line') {
+      s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#' + T.accent + '" stroke-width="4" stroke-linejoin="round"/>';
+      pts.forEach(function (p) { const q = p.split(','); s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="7" fill="#' + T.accent + '"/>'; });
+    }
+  }
+  return s + '</svg>';
+}
+function deckElNode(e, T, editable) {
+  const d = document.createElement('div');
+  d.className = 'e';
+  d.style.left = (e.x * 100) + 'px'; d.style.top = (e.y * 100) + 'px';
+  d.style.width = (e.w * 100) + 'px';
+  if (e.h != null) d.style.height = (e.h * 100) + 'px';
+  if (e.k === 'rect') {
+    d.style.background = '#' + e.fill;
+    if (e.alpha != null) d.style.opacity = e.alpha;
+    if (e.shape === 'ellipse') d.style.borderRadius = '50%';
+    else if (e.radius) d.style.borderRadius = (e.radius * 100) + 'px';
+  } else if (e.k === 'text') {
+    const t = document.createElement('div');
+    t.className = 't';
+    t.style.fontFamily = e.font + ',serif';
+    if (e.font === BODY_FONT) t.style.fontFamily = 'Calibri,Carlito,Arial,sans-serif';
+    t.style.fontSize = (e.size * 100 / 72) + 'px';
+    t.style.color = '#' + e.color;
+    t.style.fontWeight = e.bold ? '700' : '400';
+    t.style.fontStyle = e.italic ? 'italic' : 'normal';
+    t.style.textAlign = e.align;
+    t.style.lineHeight = e.lines ? '1.25' : (e.size > 40 ? '1.12' : '1.25');
+    t.style.justifyContent = e.valign === 'middle' ? 'center' : 'flex-start';
+    if (e.lines) {
+      e.lines.forEach(function (l) {
+        const b = document.createElement('div');
+        b.className = 'bl';
+        b.style.marginBottom = ((e.gap || 0.12) * 100) + 'px';
+        b.textContent = l;
+        t.appendChild(b);
+      });
+    } else {
+      t.textContent = e.text;
+    }
+    if (editable && e.bind) {
+      t.setAttribute('contenteditable', 'true');
+      t.setAttribute('spellcheck', 'false');
+      t.dataset.path = JSON.stringify(e.bind);
+      t.dataset.kind = e.kind === 'list' ? 'list' : 'str';
+    }
+    d.appendChild(t);
+  } else if (e.k === 'table') {
+    const cell = function (txt, path, head, ri) {
+      return '<td' + (editable ? ' contenteditable="true" spellcheck="false" data-kind="str" data-path=\'' + JSON.stringify(path) + '\'' : '')
+        + ' style="padding:8px 15px;border:1px solid #' + T.line + ';font-size:' + (e.size * 100 / 72) + 'px;font-family:Calibri,Carlito,Arial,sans-serif;text-align:left;vertical-align:middle;'
+        + (head ? 'background:#' + T.accent + ';color:#fff;font-weight:700;' : 'color:#' + T.fg + ';background:#' + (ri % 2 === 0 ? T.card : T.bg) + ';') + '">' + deckEsc(txt) + '</td>';
+    };
+    let h = '<table style="width:100%;border-collapse:collapse;table-layout:fixed"><tr style="height:' + (e.rowH * 100) + 'px">'
+      + e.headers.map(function (x, c) { return cell(x, e.base.concat(['headers', c]), true, 0); }).join('') + '</tr>';
+    e.rows.forEach(function (r, ri) {
+      h += '<tr style="height:' + (e.rowH * 100) + 'px">' + r.map(function (x, c) { return cell(x, e.base.concat(['rows', ri, c]), false, ri); }).join('') + '</tr>';
+    });
+    d.innerHTML = h + '</table>';
+    d.style.height = 'auto';
+  } else if (e.k === 'chart') {
+    d.innerHTML = chartSVG(e, T);
+  }
+  return d;
+}
+function renderSlideNode(sl, T, i, N, editable) {
+  const root = document.createElement('div');
+  root.className = 'sl';
+  root.style.background = '#' + T.bg;
+  root.style.setProperty('--ac', '#' + T.accent);
+  slideElements(sl, T, i, N).forEach(function (e) { root.appendChild(deckElNode(e, T, editable)); });
+  return root;
+}
+function setPath(obj, path, val) {
+  let o = obj;
+  for (let k = 0; k < path.length - 1; k++) { if (o == null) return; o = o[path[k]]; }
+  if (o != null) o[path[path.length - 1]] = val;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DECK CARD — live slide preview inside the chat: flip through
+   slides, edit text right on them, switch theme, ask Trishul to
+   change things, then download the real .pptx.
+   ══════════════════════════════════════════════════════════ */
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+function addDeckCard(spec, themeKey, opts) {
+  opts = opts || {};
+  const stream = opts.container || document.getElementById('stream');
+  const changed = function () { if (opts.onChange) opts.onChange(st.spec, st.theme); };
+  const st = { spec: spec, theme: themeKey, idx: 0, edit: false };
+  const card = el('div', 'msg assistant deck',
+    '<div class="deck-top"><div class="deck-name"></div><div class="deck-themes"></div></div>'
+    + '<div class="deck-stage"><div class="deck-view"></div>'
+    + '<button class="deck-nav prev" aria-label="Previous slide">\u2039</button>'
+    + '<button class="deck-nav next" aria-label="Next slide">\u203A</button></div>'
+    + '<div class="deck-thumbs"></div>'
+    + '<div class="deck-ask"><input class="deck-input" placeholder="Ask Trishul to change the deck\u2026 e.g. add a chart slide" autocomplete="off">'
+    + '<button class="deck-go">Apply</button></div>'
+    + '<div class="deck-actions"><label class="deck-edit"><input type="checkbox"> Edit text on slide</label>'
+    + '<span class="deck-count"></span><button class="deck-dl">Download .pptx</button></div>');
+  stream.appendChild(card);
+  const q = function (s) { return card.querySelector(s); };
+  const view = q('.deck-view'), thumbs = q('.deck-thumbs'), themesEl = q('.deck-themes');
+  const count = q('.deck-count'), nameEl = q('.deck-name'), input = q('.deck-input');
+  const go = q('.deck-go'), dl = q('.deck-dl'), editBox = q('.deck-edit input');
+
+  function renderMain() {
+    const slides = deckSlides(st.spec);
+    if (st.idx >= slides.length) st.idx = slides.length - 1;
+    if (st.idx < 0) st.idx = 0;
+    const T = THEMES[st.theme] || THEMES.midnight;
+    const k = (view.clientWidth || 620) / 1333;
+    view.style.height = (750 * k) + 'px';
+    view.innerHTML = '';
+    const node = renderSlideNode(slides[st.idx], T, st.idx, slides.length, st.edit);
+    node.style.transform = 'scale(' + k + ')';
+    view.appendChild(node);
+    count.textContent = 'Slide ' + (st.idx + 1) + ' of ' + slides.length;
+    nameEl.textContent = st.spec.title + ' \u00b7 ' + slides.length + ' slides';
+    Array.prototype.forEach.call(thumbs.children, function (b, i) { b.classList.toggle('on', i === st.idx); });
+  }
+  function renderThumbs() {
+    const slides = deckSlides(st.spec);
+    const T = THEMES[st.theme] || THEMES.midnight;
+    const k = 120 / 1333;
+    thumbs.innerHTML = '';
+    slides.forEach(function (sl, i) {
+      const b = el('button', 'deck-thumb' + (i === st.idx ? ' on' : ''));
+      b.style.width = '120px';
+      b.style.height = (750 * k) + 'px';
+      b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+      const n = renderSlideNode(sl, T, i, slides.length, false);
+      n.style.transform = 'scale(' + k + ')';
+      b.appendChild(n);
+      b.addEventListener('click', function () { st.idx = i; renderMain(); });
+      thumbs.appendChild(b);
+    });
+  }
+  function renderThemes() {
+    themesEl.innerHTML = '';
+    Object.keys(THEMES).forEach(function (key) {
+      const t = THEMES[key];
+      const b = el('button', 'deck-theme' + (key === st.theme ? ' on' : ''));
+      b.title = t.name;
+      b.setAttribute('aria-label', 'Theme ' + t.name);
+      b.style.background = 'linear-gradient(135deg,#' + t.bg + ' 50%,#' + t.accent + ' 50%)';
+      b.addEventListener('click', function () { st.theme = key; renderThemes(); renderThumbs(); renderMain(); changed(); });
+      themesEl.appendChild(b);
+    });
+  }
+  function renderAll() { renderThemes(); renderThumbs(); renderMain(); }
+
+  q('.deck-nav.prev').addEventListener('click', function () { if (st.idx > 0) { st.idx--; renderMain(); } });
+  q('.deck-nav.next').addEventListener('click', function () { if (st.idx < deckSlides(st.spec).length - 1) { st.idx++; renderMain(); } });
+  editBox.addEventListener('change', function () { st.edit = editBox.checked; renderMain(); });
+
+  let thumbTimer = null;
+  view.addEventListener('input', function (e) {
+    const t = e.target.closest ? e.target.closest('[data-path]') : null;
+    if (!t) return;
+    let path;
+    try { path = JSON.parse(t.dataset.path); } catch (err) { return; }
+    const raw = t.innerText != null ? t.innerText : t.textContent;
+    const val = t.dataset.kind === 'list'
+      ? raw.split('\n').map(function (x) { return x.trim(); }).filter(Boolean)
+      : raw.replace(/\s*\n+\s*/g, ' ').trim();
+    setPath(st.spec, path, val);
+    clearTimeout(thumbTimer);
+    thumbTimer = setTimeout(function () { renderThumbs(); changed(); }, 500);
+  });
+
+  let working = false;
+  async function refine() {
+    const instr = input.value.trim();
+    if (!instr || working) return;
+    working = true; go.disabled = true; go.textContent = 'Working\u2026';
+    try {
+      const raw = await askAI([
+        { role: 'system', content: PPT_REFINE_SYSTEM },
+        { role: 'user', content: 'Current deck JSON:\n' + JSON.stringify(st.spec) + '\n\nInstruction: ' + instr }
+      ], { create: true });
+      const ns = normDeck(parseJsonLoose(raw));
+      if (!ns.slides.length) throw new Error('bad_spec');
+      st.spec = ns;
+      input.value = '';
+      renderThumbs(); renderMain();
+      changed();
+      go.textContent = 'Updated \u2713';
+    } catch (e) {
+      go.textContent = 'Try again';
+    }
+    setTimeout(function () { go.textContent = 'Apply'; go.disabled = false; working = false; }, 1600);
+  }
+  go.addEventListener('click', refine);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); refine(); } });
+
+  dl.addEventListener('click', async function () {
+    dl.disabled = true;
+    const old = 'Download .pptx';
+    dl.textContent = 'Building\u2026';
+    try {
+      if (!(await ensureLib('pptx'))) throw new Error('lib_missing');
+      const blob = await buildPptxDeck(st.spec, st.theme, 'blob');
+      downloadBlob(blob, safeFileName(st.spec.title, 'presentation') + '.pptx');
+      dl.textContent = 'Downloaded \u2713';
+    } catch (e) {
+      dl.textContent = 'Could not build \u2014 retry';
+    }
+    setTimeout(function () { dl.textContent = old; dl.disabled = false; }, 2200);
+  });
+
+  let rs = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(rs);
+    rs = setTimeout(function () { if (document.body.contains(card)) renderMain(); }, 150);
+  });
+
+  renderAll();
+  if (!opts.container) scrollToEnd();
+  return card;
+}
+
+const PPT_SYSTEM = 'You are a presentation designer. Reply with ONLY valid JSON, no commentary and no markdown fences, in this shape: '
+  + '{"title":"...","subtitle":"...","theme":"midnight|paper|sunrise|forest|ocean","slides":[...]}. '
+  + 'The cover slide is added automatically from title and subtitle, so do not include it. Every slide object has a "layout", plus "notes" (1 to 2 sentences of speaker notes), plus the fields of its layout: '
+  + '(1) bullets: {"layout":"bullets","title":"...","bullets":["3 to 5 short bullets, max 14 words each"],"takeaway":"optional one-sentence key idea"}. '
+  + '(2) two_column: {"layout":"two_column","title":"...","left":{"heading":"...","bullets":["..."]},"right":{"heading":"...","bullets":["..."]}}. '
+  + '(3) stats: {"layout":"stats","title":"...","stats":[{"value":"7","label":"World titles"}]} with 2 to 4 stats and very short values. '
+  + '(4) timeline: {"layout":"timeline","title":"...","steps":[{"label":"2007","text":"Debut season"}]} with 3 to 5 steps. '
+  + '(5) chart: {"layout":"chart","title":"...","chart":{"type":"bar|line|pie","name":"Series name","labels":["..."],"values":[numbers only]}}. '
+  + '(6) table: {"layout":"table","title":"...","headers":["..."],"rows":[["..."]]} with at most 7 rows and 2 to 5 columns. '
+  + '(7) quote: {"layout":"quote","quote":"...","by":"..."}. (8) section: {"layout":"section","title":"...","subtitle":"..."}. (9) closing: {"layout":"closing","title":"...","subtitle":"..."}. '
+  + 'Rules: use the number of slides the person asked for (the cover counts as one), otherwise about 8 in total. Vary the layouts: use at least 3 different ones when there are 5 or more slides, and end decks of 6 or more with a closing slide. '
+  + 'Content must be specific and accurate, with real facts and numbers; use any web information supplied in the message and never invent statistics. '
+  + 'Pick the theme that suits the topic: midnight for tech and space, paper for business and school, sunrise for warm or creative topics, forest for nature and health, ocean for science, water and sports. Plain text only, no markdown symbols.';
+const PPT_REFINE_SYSTEM = PPT_SYSTEM + ' You are now given the CURRENT deck as JSON and an instruction. Return the COMPLETE updated deck JSON in the same shape, changing only what the instruction asks for and keeping everything else exactly as it is.';
+
+/* ══ styled Excel (ExcelJS) ══ */
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+async function buildXlsxStyled(spec) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Trishul';
+  wb.calcProperties = { fullCalcOnLoad: true };
+  const used = {};
+  spec.sheets.slice(0, 8).forEach(function (sh, idx) {
+    let name = String(sh.name || ('Sheet' + (idx + 1))).replace(/[\[\]:*?\/\\]/g, '').slice(0, 31) || ('Sheet' + (idx + 1));
+    while (used[name.toLowerCase()]) name = name.slice(0, 28) + '_' + (idx + 1);
+    used[name.toLowerCase()] = true;
+
+    const ws = wb.addWorksheet(name, { views: [{ state: 'frozen', ySplit: 1 }] });
+    const headers = Array.isArray(sh.headers) ? sh.headers.map(String) : [];
+    const rows = (Array.isArray(sh.rows) ? sh.rows : []).slice(0, 200).map(function (r) { return Array.isArray(r) ? r : []; });
+    let ncol = headers.length;
+    rows.forEach(function (r) { if (r.length > ncol) ncol = r.length; });
+    ncol = Math.max(1, ncol);
+
+    const colInt = [];
+    for (let c = 0; c < ncol; c++) colInt[c] = rows.every(function (r) { return typeof r[c] !== 'number' || Number.isInteger(r[c]); });
+
+    const hr = ws.addRow(headers.length ? headers : new Array(ncol).fill(''));
+    hr.height = 24;
+    hr.eachCell({ includeEmpty: true }, function (c) {
+      c.font = { bold: true, color: { argb: 'FFFFFFFF' }, name: 'Calibri', size: 12 };
+      c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF5457C7' } };
+      c.alignment = { vertical: 'middle', horizontal: 'left' };
+    });
+
+    rows.forEach(function (r, ri) {
+      const vals = r.map(function (v) { return (typeof v === 'string' && v.charAt(0) === '=' && v.length > 1) ? { formula: v.slice(1) } : v; });
+      const row = ws.addRow(vals);
+      const total = /^(total|grand total|sum|average|avg)\b/i.test(String(r[0] == null ? '' : r[0]));
+      row.eachCell({ includeEmpty: true }, function (c, ci) {
+        c.font = { name: 'Calibri', size: 11, bold: total };
+        c.border = { bottom: { style: 'thin', color: { argb: 'FFE3E5F0' } } };
+        if (total) {
+          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E9FA' } };
+          c.border = { top: { style: 'medium', color: { argb: 'FF5457C7' } } };
+        } else if (ri % 2 === 1) {
+          c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF4F5FB' } };
+        }
+        const v = c.value;
+        const isNum = typeof v === 'number' || (v && typeof v === 'object' && v.formula);
+        if (isNum) {
+          c.alignment = { horizontal: 'right' };
+          c.numFmt = colInt[ci - 1] ? '#,##0' : '#,##0.00';
+        }
+      });
+    });
+
+    for (let c = 0; c < ncol; c++) {
+      let w = headers[c] ? String(headers[c]).length : 8;
+      rows.forEach(function (r) {
+        const v = r[c];
+        const len = (typeof v === 'string' && v.charAt(0) === '=') ? 10 : String(v == null ? '' : v).length;
+        if (len > w) w = len;
+      });
+      ws.getColumn(c + 1).width = Math.max(10, Math.min(w + 4, 50));
+    }
+    if (headers.length && rows.length) ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ncol } };
+  });
+  return wb.xlsx.writeBuffer();
+}
+
+function topicOf(text) {
+  const t = String(text).replace(/\b(make|create|generate|build|prepare|draft|design|write|give|me|need|want|please|a|an|the|my|ppt|pptx|powerpoint|power point|presentation|slide|slides|slide deck|deck|slideshow|word|doc|document|docx|file|on|about|of|for|with|to|\d+)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+  return t.length >= 3 ? t : '';
+}
+
+/* ══════════════════════════════════════════════════════════
+   SWAROOP — how Trishul thinks. The choice is sent to the
+   backend, which really switches model tier, provider order,
+   answer budget and instructions (see api/backend.js).
+   ══════════════════════════════════════════════════════════ */
+const SWAROOPS = {
+  spark:  { name: 'Spark',  tag: 'Fastest',  prongs: 1, desc: 'Quick, short answers from small, speedy models.' },
+  stride: { name: 'Stride', tag: 'Balanced', prongs: 2, desc: 'Your everyday default. Fast and thoughtful.' },
+  summit: { name: 'Summit', tag: 'Deepest',  prongs: 3, desc: 'Strongest models and step-by-step reasoning. Thorough, but slower.' }
+};
+let currentSwaroop = 'stride';
+try { const sv = localStorage.getItem('trishul_swaroop'); if (SWAROOPS[sv]) currentSwaroop = sv; } catch (e) {}
+let lastMeta = null;
+
+function prongIcon(n) {
+  const xs = n === 1 ? [9] : (n === 2 ? [6, 12] : [4, 9, 14]);
+  return '<svg viewBox="0 0 18 18" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+    + xs.map(function (x, i) { const top = (n === 3 && i === 1) ? 2 : 4; return '<path d="M' + x + ' ' + top + 'V15"/>'; }).join('') + '</svg>';
+}
+function histWindow() { return { spark: 6, stride: 16, summit: 30 }[currentSwaroop] || 16; }
+
+function renderSwaroop() {
+  const S = SWAROOPS[currentSwaroop];
+  document.getElementById('swBtn').innerHTML = '<span class="sw-prongs">' + prongIcon(S.prongs) + '</span><span class="sw-name">' + S.name + '</span>'
+    + '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  const pop = document.getElementById('swPop');
+  pop.innerHTML = '<div class="sw-head">Swaroop <span>how Trishul thinks</span></div>';
+  Object.keys(SWAROOPS).forEach(function (k) {
+    const s = SWAROOPS[k];
+    const b = el('button', 'sw-opt' + (k === currentSwaroop ? ' on' : ''),
+      '<span class="sw-ic">' + prongIcon(s.prongs) + '</span><span class="sw-txt"><b>' + s.name + '</b><i>' + s.tag + '</i><em>' + s.desc + '</em></span>');
+    b.setAttribute('role', 'menuitemradio');
+    b.setAttribute('aria-checked', k === currentSwaroop ? 'true' : 'false');
+    b.addEventListener('click', function () {
+      currentSwaroop = k;
+      try { localStorage.setItem('trishul_swaroop', k); } catch (e) {}
+      renderSwaroop();
+      closeSwaroop();
+    });
+    pop.appendChild(b);
+  });
+}
+function openSwaroop() { document.getElementById('swPop').hidden = false; document.getElementById('swBtn').setAttribute('aria-expanded', 'true'); }
+function closeSwaroop() { document.getElementById('swPop').hidden = true; document.getElementById('swBtn').setAttribute('aria-expanded', 'false'); }
+
+function addReplyMeta(wrap, ms) {
+  if (!wrap) return;
+  const S = SWAROOPS[(lastMeta && lastMeta.mode) || currentSwaroop] || SWAROOPS.stride;
+  const m = el('div', 'reply-meta', S.name + ' \u00b7 ' + (ms / 1000).toFixed(1) + ' s');
+  if (lastMeta && lastMeta.model) m.title = 'via ' + lastMeta.provider + ' \u00b7 ' + lastMeta.model;
+  wrap.appendChild(m);
+}
+
+/* ══════════════════════════════════════════════════════════
+   कृति (KRITI) — the creation tab: slides, documents, sheets.
+   Everything made here (or by asking in chat) is saved to a
+   library on this device, so you can reopen and keep editing.
+   ══════════════════════════════════════════════════════════ */
+const KRITI_KEY = 'trishul_kriti_v1';
+let kritiLib = [];
+let krKind = 'pptx';
+let krBusy = false;
+
+function loadKriti() {
+  try { kritiLib = JSON.parse(localStorage.getItem(KRITI_KEY) || '[]'); } catch (e) { kritiLib = []; }
+  if (!Array.isArray(kritiLib)) kritiLib = [];
+}
+function saveKriti() {
+  try { kritiLib = kritiLib.slice(0, 30); localStorage.setItem(KRITI_KEY, JSON.stringify(kritiLib)); } catch (e) {}
+}
+function creationTitle(kind, spec) {
+  if (kind === 'xlsx') return String(spec.filename || (spec.sheets && spec.sheets[0] && spec.sheets[0].name) || 'Spreadsheet').replace(/_/g, ' ');
+  return String(spec.title || (kind === 'pptx' ? 'Presentation' : 'Document'));
+}
+function saveCreation(kind, spec, theme) {
+  const e = { id: 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), kind: kind, title: creationTitle(kind, spec), spec: spec, theme: theme || '', created: Date.now(), updated: Date.now() };
+  kritiLib.unshift(e);
+  saveKriti();
+  return e;
+}
+function updateCreation(id, spec, theme) {
+  const e = kritiLib.filter(function (x) { return x.id === id; })[0];
+  if (!e) return;
+  e.spec = spec; if (theme) e.theme = theme;
+  e.title = creationTitle(e.kind, spec);
+  e.updated = Date.now();
+  saveKriti();
+  if (document.body.dataset.tab === 'kriti') renderKritiLib();
+}
+function kindInfo(kind) {
+  return { pptx: ['\uD83D\uDCCA', 'Slides'], docx: ['\uD83D\uDCDD', 'Document'], xlsx: ['\uD83D\uDCC8', 'Sheet'] }[kind] || ['\uD83D\uDCC4', 'File'];
+}
+
+/* build whatever was created into a container (a deck card or a file card) */
+async function presentCreation(kind, spec, container, entry, o) {
+  o = o || {};
+  if (kind === 'pptx') {
+    const theme = (o.theme && THEMES[o.theme]) ? o.theme : (entry && THEMES[entry.theme] ? entry.theme : pickTheme(spec, document.documentElement.getAttribute('data-look') || ''));
+    if (entry && !entry.theme) updateCreation(entry.id, spec, theme);
+    addDeckCard(spec, theme, { container: container, onChange: function (sp, th) { if (entry) updateCreation(entry.id, sp, th); } });
+    return (spec.slides.length + 1) + ' slides';
+  }
+  if (kind === 'docx') {
+    if (!(await ensureLib('docx'))) throw new Error('lib_missing');
+    const blob = await buildDocx(spec, 'blob');
+    addFileCard('docx', safeFileName(spec.title, 'document') + '.docx', blob, Math.min(spec.sections.length, 30) + ' sections \u00b7 Word', container, o.autoDownload);
+    return 'Word document';
+  }
+  let blob;
+  if (await ensureLib('exceljs')) blob = new Blob([await buildXlsxStyled(spec)], { type: XLSX_MIME });
+  else {
+    if (!(await ensureLib('xlsx'))) throw new Error('lib_missing');
+    blob = new Blob([buildXlsx(spec, 'array')], { type: XLSX_MIME });
+  }
+  addFileCard('xlsx', safeFileName(spec.filename || (spec.sheets[0] && spec.sheets[0].name), 'spreadsheet') + '.xlsx', blob, Math.min(spec.sheets.length, 8) + ' sheet(s) \u00b7 Excel', container, o.autoDownload);
+  return 'Excel file';
+}
+
+async function generateSpec(kind, text, o) {
+  o = o || {};
+  let live = '';
+  if (kind !== 'xlsx') { try { live = await liveContext(topicOf(o.topic || text), { force: true }); } catch (e) {} }
+  const sys = kind === 'pptx' ? PPT_SYSTEM : (kind === 'docx' ? DOCX_SYSTEM : XLSX_SYSTEM);
+  const msgs = [{ role: 'system', content: sys }].concat(o.recent || [], [{ role: 'user', content: text + live + (o.ctx || '') }]);
+  const spec = parseJsonLoose(await askAI(msgs, { create: true }));
+  if (kind === 'pptx') {
+    const d = normDeck(spec);
+    if (!d.slides.length) throw new Error('bad_spec');
+    return d;
+  }
+  if (kind === 'docx') {
+    if (!spec || !Array.isArray(spec.sections) || !spec.sections.length) throw new Error('bad_spec');
+    return spec;
+  }
+  if (!spec || !Array.isArray(spec.sheets) || !spec.sheets.length) throw new Error('bad_spec');
+  return spec;
+}
+
+/* ── the tab itself ──────────────────────────────────────── */
+function setTab(t) {
+  document.body.dataset.tab = t;
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+    const on = b.dataset.tab === t;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  if (t === 'kriti') renderKritiLib();
+}
+const KR_EXAMPLES = {
+  pptx: ['A 6-slide deck on how black holes form', 'Pitch deck for a student recycling startup', 'Maths in everyday life for class 9'],
+  docx: ['A one-page leave application to my principal', 'Report on renewable energy in India', 'Study notes on Newton\u2019s laws of motion'],
+  xlsx: ['Monthly household budget', 'Weekly study timetable', 'Cricket match scorecard with totals']
+};
+function selectOpt(label, id, opts) {
+  return '<label class="kr-opt"><span>' + label + '</span><select id="' + id + '">' + opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select></label>';
+}
+function renderKritiForm() {
+  Array.prototype.forEach.call(document.querySelectorAll('.kr-type'), function (b) {
+    b.classList.toggle('on', b.dataset.kind === krKind);
+    b.setAttribute('aria-checked', b.dataset.kind === krKind ? 'true' : 'false');
+  });
+  const opts = document.getElementById('krOpts');
+  if (krKind === 'pptx') {
+    opts.innerHTML = selectOpt('Slides', 'krCount', [['', 'Auto'], ['5', '5'], ['8', '8'], ['12', '12']])
+      + selectOpt('Theme', 'krTheme', [['', 'Auto'], ['midnight', 'Midnight'], ['paper', 'Paper'], ['sunrise', 'Sunrise'], ['forest', 'Forest'], ['ocean', 'Ocean']]);
+  } else if (krKind === 'docx') {
+    opts.innerHTML = selectOpt('Length', 'krLen', [['', 'Standard'], ['short', 'Short (about 1 page)'], ['long', 'Detailed']])
+      + selectOpt('Tone', 'krTone', [['', 'Clear'], ['formal', 'Formal'], ['friendly', 'Friendly'], ['academic', 'Academic']]);
+  } else {
+    opts.innerHTML = selectOpt('Formulas', 'krForm', [['yes', 'Include totals and formulas'], ['no', 'Data only']]);
+  }
+  const ex = document.getElementById('krEx');
+  ex.innerHTML = '';
+  KR_EXAMPLES[krKind].forEach(function (t) {
+    const b = el('button', 'chip', t);
+    b.addEventListener('click', function () { const p = document.getElementById('krPrompt'); p.value = t; p.focus(); });
+    ex.appendChild(b);
+  });
+  document.getElementById('krPrompt').placeholder = krKind === 'pptx' ? 'What is the presentation about?' : (krKind === 'docx' ? 'What should the document say?' : 'What should the sheet track?');
+}
+function krVal(id) { const e = document.getElementById(id); return e ? e.value : ''; }
+function composeKritiPrompt(text) {
+  let t = text;
+  if (krKind === 'pptx' && krVal('krCount')) t += '\nUse exactly ' + krVal('krCount') + ' slides in total, cover included.';
+  if (krKind === 'docx') {
+    const len = krVal('krLen'), tone = krVal('krTone');
+    if (len === 'short') t += '\nKeep it to about one page (350 to 450 words).';
+    if (len === 'long') t += '\nMake it detailed, about 1200 to 1500 words with several sections.';
+    if (tone) t += '\nTone: ' + tone + '.';
+  }
+  if (krKind === 'xlsx' && krVal('krForm') === 'yes') t += '\nInclude totals and calculated columns as live Excel formulas.';
+  return t;
+}
+async function kritiCreate() {
+  if (krBusy) return;
+  const raw = document.getElementById('krPrompt').value.trim();
+  const go = document.getElementById('krGo'), out = document.getElementById('krOut');
+  if (!raw) { document.getElementById('krPrompt').focus(); return; }
+  krBusy = true; go.disabled = true; go.textContent = 'Creating\u2026';
+  setOrbState('thinking');
+  out.innerHTML = '<div class="kr-working"><span class="kr-pulse"></span>' + (krKind === 'pptx' ? 'Designing your slides\u2026' : (krKind === 'docx' ? 'Writing your document\u2026' : 'Building your sheet\u2026')) + '</div>';
+  try {
+    const kind = krKind;
+    const spec = await generateSpec(kind, composeKritiPrompt(raw), { topic: raw });
+    const theme = kind === 'pptx' ? (krVal('krTheme') || pickTheme(spec, document.documentElement.getAttribute('data-look') || '')) : '';
+    const entry = saveCreation(kind, spec, theme);
+    out.innerHTML = '';
+    out.appendChild(el('div', 'kr-note', 'Ready, and saved to your creations below.'));
+    await presentCreation(kind, spec, out, entry, { theme: theme, autoDownload: false });
+    renderKritiLib();
+  } catch (e) {
+    out.innerHTML = '<div class="kr-working err">' + ((e && e.message === 'lib_missing')
+      ? 'I couldn\u2019t load the file maker. Check your connection and try again.'
+      : 'That didn\u2019t work this time. Try again, or add a few more details.') + '</div>';
+  }
+  setOrbState('idle');
+  krBusy = false; go.disabled = false; go.textContent = 'Create';
+}
+function renderKritiLib() {
+  const box = document.getElementById('krLib');
+  box.innerHTML = '';
+  if (!kritiLib.length) {
+    box.appendChild(el('div', 'dr-empty', 'Nothing here yet. Whatever you create, here or by asking in chat, is kept on this device so you can reopen and keep editing.'));
+    return;
+  }
+  kritiLib.forEach(function (c) {
+    const ki = kindInfo(c.kind);
+    const card = el('div', 'kr-item');
+    card.innerHTML = '<div class="kr-ic">' + ki[0] + '</div><div class="kr-meta"><div class="kr-name"></div><div class="kr-when">' + ki[1] + ' \u00b7 ' + dayLabel(c.updated) + '</div></div>';
+    card.querySelector('.kr-name').textContent = c.title;
+    const open = el('button', 'kr-open', 'Open');
+    open.addEventListener('click', async function () {
+      const out = document.getElementById('krOut');
+      out.innerHTML = '';
+      try { await presentCreation(c.kind, c.spec, out, c, { autoDownload: false }); out.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      catch (e) { out.innerHTML = '<div class="kr-working err">Couldn\u2019t open that one. Check your connection and try again.</div>'; }
+    });
+    const del = el('button', 'kr-del', '\u00d7');
+    del.setAttribute('aria-label', 'Delete');
+    del.addEventListener('click', function () { kritiLib = kritiLib.filter(function (x) { return x.id !== c.id; }); saveKriti(); renderKritiLib(); });
+    card.appendChild(open); card.appendChild(del);
+    box.appendChild(card);
+  });
+}
+function initKriti() {
+  loadKriti();
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.addEventListener('click', function () { setTab(b.dataset.tab); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('.kr-type'), function (b) { b.addEventListener('click', function () { krKind = b.dataset.kind; renderKritiForm(); }); });
+  document.getElementById('krGo').addEventListener('click', kritiCreate);
+  document.getElementById('krPrompt').addEventListener('keydown', function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); kritiCreate(); } });
+  renderKritiForm();
+  renderKritiLib();
+  document.getElementById('swBtn').addEventListener('click', function (e) { e.stopPropagation(); document.getElementById('swPop').hidden ? openSwaroop() : closeSwaroop(); });
+  document.addEventListener('click', function (e) { if (!e.target.closest('#swPop') && !e.target.closest('#swBtn')) closeSwaroop(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSwaroop(); });
+  renderSwaroop();
+}
+
+/* chat: asking for a file creates it, saves it to कृति, and shows it here */
 async function createFileFlow(kind, text, attached) {
   const thinking = addThinking();
   setOrbState('thinking');
 
-  const ctx = attachmentContext(attached);
   const recent = history.slice(-7, -1).map(function (m) { return { role: m.role, content: m.content }; });
-  const msgs = [{ role: 'system', content: kind === 'pptx' ? PPT_SYSTEM : (kind === 'docx' ? DOCX_SYSTEM : XLSX_SYSTEM) }]
-    .concat(recent, [{ role: 'user', content: text + ctx }]);
-
   let intro = '';
   let note = '';
   let failed = false;
 
   try {
-    if (!(await ensureLib(kind))) throw new Error('lib_missing');
-
-    const spec = parseJsonLoose(await askAI(msgs));
-
+    const spec = await generateSpec(kind, text, { ctx: attachmentContext(attached), recent: recent });
+    const entry = saveCreation(kind, spec, kind === 'pptx' ? pickTheme(spec, document.documentElement.getAttribute('data-look') || '') : '');
+    thinking.remove();
+    const stream = document.getElementById('stream');
+    const summary = await presentCreation(kind, spec, stream, entry, { autoDownload: true });
     if (kind === 'pptx') {
-      if (!spec || !Array.isArray(spec.slides) || !spec.slides.length) throw new Error('bad_spec');
-      const blob = await buildPptx(spec, 'blob');
-      const name = safeFileName(spec.title, 'presentation') + '.pptx';
-      const count = Math.min(spec.slides.length, 20) + 1;
-      thinking.remove();
-      addFileCard('pptx', name, blob, count + ' slides \u00b7 PowerPoint');
-      intro = 'Your presentation is ready, buddy \u2014 ' + count + ' slides with speaker notes. It opens in PowerPoint, Google Slides or Keynote.';
-      note = '[Created a PowerPoint: ' + String(spec.title || '').slice(0, 60) + ', ' + count + ' slides]';
+      intro = 'Here\u2019s your deck, buddy \u2014 ' + summary + '. Flip through it, tick \u201cEdit text on slide\u201d to change anything directly, switch the theme, or tell me what to change. Then download the .pptx. It\u2019s saved in \u0915\u0943\u0924\u093F too.';
+      note = '[Created a PowerPoint: ' + entry.title.slice(0, 60) + ', ' + summary + ']';
     } else if (kind === 'docx') {
-      if (!spec || !Array.isArray(spec.sections) || !spec.sections.length) throw new Error('bad_spec');
-      const blob = await buildDocx(spec, 'blob');
-      const name = safeFileName(spec.title, 'document') + '.docx';
-      thinking.remove();
-      addFileCard('docx', name, blob, Math.min(spec.sections.length, 30) + ' sections \u00b7 Word');
-      intro = 'Your Word document is ready, buddy. It opens in Word, Google Docs or LibreOffice, and you can edit everything.';
-      note = '[Created a Word document: ' + String(spec.title || '').slice(0, 60) + ']';
+      intro = 'Your Word document is ready, buddy. It opens in Word, Google Docs or LibreOffice, and it\u2019s saved in \u0915\u0943\u0924\u093F.';
+      note = '[Created a Word document: ' + entry.title.slice(0, 60) + ']';
     } else {
-      if (!spec || !Array.isArray(spec.sheets) || !spec.sheets.length) throw new Error('bad_spec');
-      const data = buildXlsx(spec, 'array');
-      const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-      const name = safeFileName(spec.filename || (spec.sheets[0] && spec.sheets[0].name), 'spreadsheet') + '.xlsx';
-      thinking.remove();
-      addFileCard('xlsx', name, blob, Math.min(spec.sheets.length, 8) + ' sheet(s) \u00b7 Excel');
-      intro = 'Your spreadsheet is ready, buddy. Formulas are live, so you can edit the numbers and the totals will update.';
-      note = '[Created an Excel file: ' + name + ']';
+      intro = 'Your spreadsheet is ready, buddy. Headers are styled, rows are filterable, formulas are live, and it\u2019s saved in \u0915\u0943\u0924\u093F.';
+      note = '[Created an Excel file: ' + entry.title.slice(0, 60) + ']';
     }
+    if (document.body.dataset.tab === 'kriti') renderKritiLib();
   } catch (e) {
     failed = true;
     thinking.remove();
@@ -1198,6 +2134,24 @@ async function createFileFlow(kind, text, attached) {
   busy = false;
   updateComposerState();
 }
+
+
+function addFileCard(kind, filename, blob, summary, container, auto) {
+  const stream = container || document.getElementById('stream');
+  const url = URL.createObjectURL(blob);
+  const wrap = el('div', 'msg assistant file-card');
+  wrap.innerHTML = '<div class="file-icon">' + (kind === 'pptx' ? '\uD83D\uDCCA' : (kind === 'docx' ? '\uD83D\uDCDD' : '\uD83D\uDCC8')) + '</div>'
+    + '<div class="file-meta"><div class="file-name">' + escapeHtml(filename) + '</div>'
+    + '<div class="file-sub">' + escapeHtml(summary) + '</div></div>';
+  const a = el('a', 'file-dl', 'Download');
+  a.href = url;
+  a.download = filename;
+  wrap.appendChild(a);
+  stream.appendChild(wrap);
+  scrollToEnd();
+  if (auto !== false) { try { a.click(); } catch (e) {} }
+}
+
 
 /* ══════════════════════════════════════════════════════════
    SEND — the entire pipeline
@@ -1251,13 +2205,16 @@ async function sendMessage(rawText) {
 
   const attachCtx = attachmentContext(attachedNow);
 
-  const apiHistory = history.slice(-16).map(function (m) { return { role: m.role, content: m.content }; });
+  const apiHistory = history.slice(-histWindow()).map(function (m) { return { role: m.role, content: m.content }; });
   if (apiHistory.length) {
     apiHistory[apiHistory.length - 1] = { role: 'user', content: text + liveCtx + attachCtx };
   }
   const msgs = [{ role: 'system', content: systemPrompt(text) }].concat(apiHistory);
 
   let reply;
+  let failedReply = false;
+  const t0 = Date.now();
+  lastMeta = null;
   try {
     if (imgs.length) {
       const earlier = history.slice(-7, -1).map(function (m) {
@@ -1270,6 +2227,7 @@ async function sendMessage(rawText) {
     }
     if (!reply) reply = 'I didn\u2019t quite catch that, buddy \u2014 could you try again?';
   } catch (e) {
+    failedReply = true;
     reply = imgs.length ? 'I couldn\u2019t look at that image just now, buddy \u2014 try again in a moment, or try a smaller picture.' : 'I\u2019m having trouble reaching my reasoning engine right now, buddy. Give it a moment and try again.';
   }
 
@@ -1285,6 +2243,7 @@ async function sendMessage(rawText) {
   const replyWrap = addAssistantMessage(reply);
   history.push({ role: 'assistant', content: reply });
   persistTurn('assistant', reply);
+  if (!failedReply && !imgs.length) addReplyMeta(replyWrap, Date.now() - t0);
   addChips(replyWrap, reply);
 
   if (voiceOn) speak(spokenLine || cleanForSpeech(reply));
@@ -1310,6 +2269,9 @@ const LIBS = {
     'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
     'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'] },
+  exceljs: { ok: function () { return typeof ExcelJS !== 'undefined'; }, urls: [
+    'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+    'https://unpkg.com/exceljs@4.4.0/dist/exceljs.min.js'] },
   docx: { ok: function () { return typeof docx !== 'undefined'; }, urls: [
     'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js',
     'https://unpkg.com/docx@8.5.0/build/index.umd.js'] }
@@ -1396,6 +2358,7 @@ function recentDigest() {
   return memoryDigest || '';
 }
 function memoryBlock() {
+  if (currentSwaroop === 'spark') return '';
   const d = recentDigest();
   if (!d) return '';
   return '\n\nBackground from earlier chats (use it only if clearly relevant to what the person asks now; never recite it and never mention that you have it):\n' + d;
@@ -1442,6 +2405,7 @@ function showHome() {
 /* ── chat actions ────────────────────────────────────────── */
 function startNewChat() {
   if (busy) return;
+  setTab('chat');
   currentChatId = null;
   history = [];
   showHome();
@@ -1453,6 +2417,7 @@ function openChat(id) {
   if (busy) return;
   const c = chats.filter(function (x) { return x.id === id; })[0];
   if (!c) return;
+  setTab('chat');
   currentChatId = id;
   history = c.messages.map(function (m) { return { role: m.role, content: m.content }; });
   const stream = document.getElementById('stream');
@@ -1704,6 +2669,7 @@ async function boot() {
   } catch (e) {}
   updateLookSwatches();
 
+  initKriti();
   loadChats();
   migrateOldHistory();
   showHome();
