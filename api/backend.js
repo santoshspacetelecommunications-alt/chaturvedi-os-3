@@ -231,7 +231,7 @@ async function handleChat(body, res) {
 
   // The mode's instruction is skipped for file creation, where the reply must be pure JSON.
   const msgs = messages.slice();
-  if (M.hint && body.purpose !== 'create') {
+  if (M.hint && body.purpose !== 'create' && body.purpose !== 'utility') {
     const i = msgs.findIndex(function (m) { return m.role === 'system'; });
     if (i >= 0) msgs[i] = { role: 'system', content: String(msgs[i].content) + '\n\n' + M.hint };
     else msgs.unshift({ role: 'system', content: M.hint });
