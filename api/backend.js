@@ -1,3 +1,4 @@
+
 /* ══════════════════════════════════════════════════════════
    /api/backend — one Vercel serverless function, two jobs
 
@@ -13,6 +14,8 @@
      OPENROUTER_KEY (free)
      NVIDIA_KEY     (free)
      GOOGLE_KEY     (free; also powers image analysis and live web search)
+     CF_ACCOUNT_ID + CF_API_TOKEN  (Cloudflare Workers AI: the Flash picture engine)
+     HF_TOKEN       (Hugging Face: the Studio picture engine)
      ANTHROPIC_KEY  (optional, PAID: Anthropic has no free API tier)
      TAVILY_KEY
      APP_SECRET     (must match the APP_SECRET in index.html)
@@ -36,6 +39,8 @@ module.exports = async function handler(req, res) {
     await handleSearch(body, res);
   } else if (body.type === 'vision') {
     await handleVision(body, res);
+  } else if (body.type === 'image') {
+    await handleImage(body, res);
   } else {
     await handleChat(body, res);
   }
@@ -246,6 +251,144 @@ async function handleChat(body, res) {
     return;
   }
   res.status(502).json(out);
+}
+
+/* ── PICTURES: two engines, genuinely different ───────────
+   Flash  = Cloudflare Workers AI (FLUX schnell class): a draft in seconds.
+   Studio = Hugging Face (FLUX.1 dev / SD 3.5 class): slower, finer detail.
+   Each falls back to the other if it is not set up, out of credit or down.
+   Model lists are discovered live, like the chat models, so names can change. */
+const IMG_MODES = {
+  flash:  { order: ['cloudflare', 'huggingface'], tier: 'flash',  timeoutMs: 26000 },
+  studio: { order: ['huggingface', 'cloudflare'], tier: 'studio', timeoutMs: 45000 }
+};
+const IMG_PROVIDERS = {
+  cloudflare: {
+    exclude: /img2img|inpaint|flux-2|embed|upscal/i,
+    tiers: {
+      flash:  { prefs: [/flux-1-schnell/, /lightning/, /dreamshaper.*lcm/, /./], fallback: ['@cf/black-forest-labs/flux-1-schnell'] },
+      studio: { prefs: [/stable-diffusion-xl-base/, /phoenix/, /lucid/, /flux-1-schnell/], fallback: ['@cf/stabilityai/stable-diffusion-xl-base-1.0', '@cf/black-forest-labs/flux-1-schnell'] }
+    }
+  },
+  huggingface: {
+    exclude: /lora|controlnet|inpaint|refiner|ip-adapter|pixart|edit/i,
+    tiers: {
+      flash:  { prefs: [/FLUX\.1-schnell/i, /turbo|lightning/i, /stable-diffusion-xl-base/i], fallback: ['black-forest-labs/FLUX.1-schnell'] },
+      studio: { prefs: [/FLUX\.1-dev/i, /stable-diffusion-3\.5-large/i, /FLUX\.1-Krea/i, /stable-diffusion-3-medium/i, /stable-diffusion-xl-base/i, /FLUX\.1-schnell/i], fallback: ['black-forest-labs/FLUX.1-dev', 'stabilityai/stable-diffusion-3.5-large', 'black-forest-labs/FLUX.1-schnell'] }
+    }
+  }
+};
+const imgCache = {};
+
+function imgCreds(id) {
+  if (id === 'cloudflare') return process.env.CF_ACCOUNT_ID && process.env.CF_API_TOKEN ? { acc: process.env.CF_ACCOUNT_ID, tok: process.env.CF_API_TOKEN } : null;
+  if (id === 'huggingface') return process.env.HF_TOKEN ? { tok: process.env.HF_TOKEN } : null;
+  return null;
+}
+
+async function imgDiscover(id, cred) {
+  if (id === 'cloudflare') {
+    const r = await withTimeout(fetch('https://api.cloudflare.com/client/v4/accounts/' + cred.acc + '/ai/models/search?per_page=100', { headers: { 'Authorization': 'Bearer ' + cred.tok } }), 5000);
+    if (!r.ok) throw httpError('cloudflare_models', r.status);
+    const data = await r.json();
+    return (data.result || []).filter(function (m) {
+      const t = m.task && m.task.name ? String(m.task.name) : '';
+      return /text.?to.?image/i.test(t) || (!t && /flux|stable-diffusion|dreamshaper|lightning|phoenix|lucid/i.test(m.name || ''));
+    }).map(function (m) { return m.name; });
+  }
+  const r = await withTimeout(fetch('https://huggingface.co/api/models?pipeline_tag=text-to-image&inference_provider=hf-inference&sort=likes&direction=-1&limit=40', { headers: { 'Authorization': 'Bearer ' + cred.tok } }), 5000);
+  if (!r.ok) throw httpError('huggingface_models', r.status);
+  return (await r.json()).map(function (m) { return m.id; }).filter(Boolean);
+}
+
+async function imgCandidates(id, cred, tier, force) {
+  const key = id + ':' + tier;
+  const c = imgCache[key];
+  if (!force && c && Date.now() - c.at < MODEL_CACHE_MS) return c.models;
+  const P = IMG_PROVIDERS[id], T = P.tiers[tier];
+  let found = [];
+  try { found = rankModels(await imgDiscover(id, cred), { prefs: T.prefs, exclude: P.exclude }); } catch (e) { found = []; }
+  let models = found.slice(0, 3);
+  if (!models.length && c) models = c.models;
+  T.fallback.forEach(function (m) { if (models.indexOf(m) === -1) models.push(m); });
+  imgCache[key] = { at: Date.now(), models: models };
+  return models;
+}
+
+async function imgRun(id, cred, model, prompt, w, h) {
+  if (id === 'cloudflare') {
+    const body = /flux-1-schnell/.test(model) ? { prompt: prompt, steps: 4 }
+      : { prompt: prompt, width: w, height: h, num_steps: /lightning/.test(model) ? 4 : 20 };
+    const r = await fetch('https://api.cloudflare.com/client/v4/accounts/' + cred.acc + '/ai/run/' + model, {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + cred.tok, 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    if (!r.ok) throw httpError('cloudflare', r.status);
+    const ct = r.headers.get('content-type') || '';
+    if (ct.indexOf('image/') === 0) return { mime: ct.split(';')[0], b64: Buffer.from(await r.arrayBuffer()).toString('base64') };
+    const j = await r.json();
+    const b64 = j && j.result && j.result.image;
+    if (!b64) throw new Error('cloudflare_no_image');
+    return { mime: 'image/jpeg', b64: b64 };
+  }
+  const side = function (v) { return Math.min(896, v); };
+  const params = { width: side(w), height: side(h) };
+  if (/schnell/i.test(model)) params.num_inference_steps = 4;
+  const r = await fetch('https://router.huggingface.co/hf-inference/models/' + model, {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + cred.tok, 'Content-Type': 'application/json', 'Accept': 'image/jpeg', 'x-wait-for-model': 'true' },
+    body: JSON.stringify({ inputs: prompt, parameters: params })
+  });
+  if (!r.ok) throw httpError('huggingface', r.status);
+  const ct = r.headers.get('content-type') || 'image/jpeg';
+  if (ct.indexOf('image/') !== 0) throw new Error('huggingface_not_image');
+  return { mime: ct.split(';')[0], b64: Buffer.from(await r.arrayBuffer()).toString('base64') };
+}
+
+async function handleImage(body, res) {
+  const prompt = typeof body.prompt === 'string' ? body.prompt.trim().slice(0, 600) : '';
+  if (prompt.length < 3) { res.status(400).json({ error: 'bad_request', detail: 'prompt required' }); return; }
+  const modeKey = IMG_MODES[body.mode] ? body.mode : 'flash';
+  const M = IMG_MODES[modeKey];
+  const clampDim = function (v) { v = Number(v); if (!isFinite(v)) v = 1024; return Math.max(256, Math.min(1024, Math.round(v / 16) * 16)); };
+  const w = clampDim(body.width), h = clampDim(body.height);
+
+  const t0 = Date.now();
+  const reasons = [];
+  let anyKey = false;
+
+  for (let i = 0; i < M.order.length; i++) {
+    const id = M.order[i];
+    const cred = imgCreds(id);
+    if (!cred) continue;
+    anyKey = true;
+
+    const tried = {};
+    let stop = false;
+    for (let round = 0; round < 2 && !stop; round++) {
+      const cands = (await imgCandidates(id, cred, M.tier, round === 1)).filter(function (m) { return !tried[m]; }).slice(0, 3);
+      if (!cands.length) break;
+      let sawModelError = false;
+      for (let j = 0; j < cands.length; j++) {
+        if (Date.now() - t0 > 52000) { stop = true; break; }
+        const model = cands[j];
+        tried[model] = true;
+        try {
+          const out = await withTimeout(imgRun(id, cred, model, prompt, w, h), M.timeoutMs);
+          if (out.b64.length > 4300000) throw new Error(id + '_image_too_large');
+          res.status(200).json({ image: 'data:' + out.mime + ';base64,' + out.b64, meta: { mode: modeKey, provider: id, model: model, ms: Date.now() - t0, fellBack: i > 0 } });
+          return;
+        } catch (e) {
+          reasons.push(String((e && e.message) || e));
+          const s = e && e.status;
+          if (s === 401 || s === 402 || s === 403) { stop = true; break; }               // bad key or no credit: next engine
+          if (s === 400 || s === 404 || s === 410 || s === 422) { sawModelError = true; continue; } // model not usable: next model
+          stop = true; break;                                                           // busy / slow / outage: next engine
+        }
+      }
+      if (!sawModelError) break;
+    }
+  }
+  res.status(502).json({ error: 'all_image_engines_failed', detail: anyKey ? (reasons.join('; ') || 'unknown') : 'no_image_keys_set (add CF_ACCOUNT_ID + CF_API_TOKEN and/or HF_TOKEN)' });
 }
 
 /* ── VISION (image analysis) ──────────────────────────────── */
@@ -512,14 +655,14 @@ async function handleSearch(body, res) {
     return;
   }
 
-  let ctx = '';
+  let found = { text: '', sources: [] };
   if (process.env.TAVILY_KEY) {
-    try { ctx = await withTimeout(tavilyContext(query), 7000); } catch (e) { ctx = ''; }
+    try { found = await withTimeout(tavilyContext(query), 7000); } catch (e) { found = { text: '', sources: [] }; }
   }
-  if (!ctx && process.env.GOOGLE_KEY) {
-    try { ctx = await withTimeout(groundedContext(query), 9000); } catch (e) { ctx = ''; }
+  if (!found.text && process.env.GOOGLE_KEY) {
+    try { found = await withTimeout(groundedContext(query), 9000); } catch (e) { found = { text: '', sources: [] }; }
   }
-  res.status(200).json({ context: ctx });
+  res.status(200).json({ context: found.text, sources: found.sources });
 }
 
 async function tavilyContext(query) {
@@ -528,17 +671,20 @@ async function tavilyContext(query) {
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + process.env.TAVILY_KEY },
     body: JSON.stringify({ api_key: process.env.TAVILY_KEY, query: query, max_results: 5, include_answer: true })
   });
-  if (!r.ok) return '';
+  if (!r.ok) return { text: '', sources: [] };
   const data = await r.json();
   const results = data.results || [];
-  if (!results.length && !data.answer) return '';
+  if (!results.length && !data.answer) return { text: '', sources: [] };
 
   const lines = results.slice(0, 5).map(function (x) {
     return '- ' + x.title + ' \u2014 ' + x.url + '\n  ' + (x.content || '').slice(0, 220);
   }).join('\n');
 
-  return '\n\nCurrent information from the web (more recent than your training; trust it over your memory when they conflict):\n'
-    + (data.answer ? 'Summary: ' + data.answer + '\n' : '') + lines;
+  return {
+    text: '\n\nCurrent information from the web (more recent than your training; trust it over your memory when they conflict):\n'
+      + (data.answer ? 'Summary: ' + data.answer + '\n' : '') + lines,
+    sources: results.slice(0, 5).map(function (x) { return { title: String(x.title || '').slice(0, 80), url: x.url }; }).filter(function (x) { return x.url; })
+  };
 }
 
 /* Free fallback: Gemini with Google Search grounding (uses GOOGLE_KEY). */
@@ -547,6 +693,7 @@ async function groundedContext(query) {
   const p = Object.assign({}, base, { cacheKey: 'google:search' });
   const today = new Date().toDateString();
 
+  let srcs = [];
   const out = await tryProviders([p], async function (pp, key, model) {
     const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + encodeURIComponent(key);
     const r = await fetch(url, {
@@ -560,10 +707,13 @@ async function groundedContext(query) {
     });
     if (!r.ok) throw httpError('google_search', r.status);
     const data = await r.json();
-    const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+    const cand = data.candidates && data.candidates[0];
+    const chunks = (cand && cand.groundingMetadata && cand.groundingMetadata.groundingChunks) || [];
+    srcs = chunks.map(function (c) { return c.web ? { title: String(c.web.title || '').slice(0, 80), url: c.web.uri } : null; }).filter(function (x) { return x && x.url; }).slice(0, 5);
+    const parts = cand && cand.content && cand.content.parts;
     return parts ? parts.map(function (x) { return x.text || ''; }).join('').trim() : '';
   });
 
-  if (!out.reply) return '';
-  return '\n\nCurrent information from the web (Google Search; more recent than your training; trust it over your memory when they conflict):\n' + out.reply;
+  if (!out.reply) return { text: '', sources: [] };
+  return { text: '\n\nCurrent information from the web (Google Search; more recent than your training; trust it over your memory when they conflict):\n' + out.reply, sources: srcs };
 }
