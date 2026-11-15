@@ -1,4 +1,3 @@
-
 /* ══════════════════════════════════════════════════════════
    /api/backend — one Vercel serverless function, two jobs
 
@@ -16,12 +15,28 @@
      GOOGLE_KEY     (free; also powers image analysis and live web search)
      CF_ACCOUNT_ID + CF_API_TOKEN  (Cloudflare Workers AI: the Flash picture engine)
      HF_TOKEN       (Hugging Face: the Studio picture engine)
+     PEXELS_KEY     (optional, free: better real photos; without it Wikimedia Commons and Openverse are used)
      ANTHROPIC_KEY  (optional, PAID: Anthropic has no free API tier)
      TAVILY_KEY
      APP_SECRET     (must match the APP_SECRET in index.html)
    ══════════════════════════════════════════════════════════ */
 
+const BACKEND_VERSION = '2026-11-15-photos';
+
 module.exports = async function handler(req, res) {
+  // Open /api/backend?health=1 in a browser to see which services this deployment can use (never shows any key).
+  if (req.method === 'GET' && String(req.url || '').indexOf('health') !== -1) {
+    const has = function (k) { return !!process.env[k]; };
+    res.status(200).json({
+      ok: true, version: BACKEND_VERSION,
+      chat: { groq: has('GROQ_KEY'), openrouter: has('OPENROUTER_KEY'), nvidia: has('NVIDIA_KEY'), google: has('GOOGLE_KEY'), anthropic: has('ANTHROPIC_KEY') },
+      pictures: { flash_cloudflare: has('CF_ACCOUNT_ID') && has('CF_API_TOKEN'), studio_huggingface: has('HF_TOKEN') },
+      photos: { wikimedia: true, openverse: true, pexels: has('PEXELS_KEY') },
+      search: { tavily: has('TAVILY_KEY'), google_grounding: has('GOOGLE_KEY') },
+      protected_by_secret: has('APP_SECRET')
+    });
+    return;
+  }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'method_not_allowed' });
     return;
@@ -41,6 +56,8 @@ module.exports = async function handler(req, res) {
     await handleVision(body, res);
   } else if (body.type === 'image') {
     await handleImage(body, res);
+  } else if (body.type === 'photo') {
+    await handlePhoto(body, res);
   } else {
     await handleChat(body, res);
   }
@@ -389,6 +406,106 @@ async function handleImage(body, res) {
     }
   }
   res.status(502).json({ error: 'all_image_engines_failed', detail: anyKey ? (reasons.join('; ') || 'unknown') : 'no_image_keys_set (add CF_ACCOUNT_ID + CF_API_TOKEN and/or HF_TOKEN)' });
+}
+
+/* ── REAL PHOTOS from the internet ─────────────────────────
+   Finds a real, openly licensed photograph for a subject and returns it
+   as data with a credit line. Order: Pexels (if PEXELS_KEY is set), then
+   Wikimedia Commons, then Openverse. The picture is fetched here on the
+   server, so the browser never has to deal with hotlinking or CORS. */
+const PHOTO_UA = 'Trishul/1.0 (personal AI assistant; photo lookup)';
+const BAD_PHOTO = /\.svg|\.tif|logo|icon|diagram|chart|\bmap\b|flag of|coat of arms|signature|nude|naked|porn|\bsex|erotic|genital|breast|screenshot|poster|scan/i;
+
+function stripHtml(s) {
+  return String(s || '').replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/\s+/g, ' ').trim().slice(0, 80);
+}
+async function photoFetchBytes(url, maxBytes) {
+  const r = await withTimeout(fetch(url, { headers: { 'User-Agent': PHOTO_UA, 'Accept': 'image/*' }, redirect: 'follow' }), 12000);
+  if (!r.ok) throw httpError('photo_fetch', r.status);
+  const ct = String(r.headers.get('content-type') || '').split(';')[0].trim();
+  if (!/^image\/(jpeg|png|webp)$/.test(ct)) throw new Error('photo_not_image');
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length > maxBytes) throw new Error('photo_too_large');
+  return { mime: ct, b64: buf.toString('base64') };
+}
+async function photoWikimedia(q) {
+  const u = 'https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=15&gsrsearch='
+    + encodeURIComponent(q + ' filetype:bitmap') + '&prop=imageinfo&iiprop=url|size|mime|extmetadata&iiurlwidth=1280&iiextmetadatafilter=LicenseShortName|Artist';
+  const r = await withTimeout(fetch(u, { headers: { 'User-Agent': PHOTO_UA } }), 8000);
+  if (!r.ok) throw httpError('wikimedia', r.status);
+  const data = await r.json();
+  const pages = data.query && data.query.pages ? Object.keys(data.query.pages).map(function (k) { return data.query.pages[k]; }) : [];
+  pages.sort(function (a, c) { return (a.index || 0) - (c.index || 0); });
+  const out = [];
+  pages.forEach(function (pg) {
+    const ii = pg.imageinfo && pg.imageinfo[0];
+    if (!ii || !/^image\/(jpeg|png)$/.test(ii.mime || '')) return;
+    if (BAD_PHOTO.test(pg.title || '') || (ii.width || 0) < 900 || !ii.height) return;
+    const md = ii.extmetadata || {};
+    const who = stripHtml(md.Artist && md.Artist.value) || 'Wikimedia Commons';
+    const lic = stripHtml(md.LicenseShortName && md.LicenseShortName.value);
+    out.push({ url: ii.thumburl || ii.url, ratio: ii.width / ii.height, credit: 'Photo: ' + who + ' \u00b7 Wikimedia Commons' + (lic ? ' \u00b7 ' + lic : ''), pageUrl: ii.descriptionurl || '' });
+  });
+  return out;
+}
+async function photoOpenverse(q) {
+  const u = 'https://api.openverse.org/v1/images/?q=' + encodeURIComponent(q) + '&page_size=12&mature=false&license_type=commercial';
+  const r = await withTimeout(fetch(u, { headers: { 'User-Agent': PHOTO_UA } }), 8000);
+  if (!r.ok) throw httpError('openverse', r.status);
+  const data = await r.json();
+  return (data.results || []).filter(function (x) { return x && (x.thumbnail || x.url) && !BAD_PHOTO.test(x.title || ''); }).map(function (x) {
+    return {
+      url: x.thumbnail || x.url, ratio: x.width && x.height ? x.width / x.height : 1.5,
+      credit: 'Photo: ' + stripHtml(x.creator || 'Unknown') + ' \u00b7 ' + (x.source || 'Openverse') + ' \u00b7 ' + String(x.license || '').toUpperCase() + (x.license_version ? ' ' + x.license_version : ''),
+      pageUrl: x.foreign_landing_url || ''
+    };
+  });
+}
+async function photoPexels(q, orient) {
+  const u = 'https://api.pexels.com/v1/search?query=' + encodeURIComponent(q) + '&per_page=10&orientation=' + orient;
+  const r = await withTimeout(fetch(u, { headers: { 'Authorization': process.env.PEXELS_KEY, 'User-Agent': PHOTO_UA } }), 8000);
+  if (!r.ok) throw httpError('pexels', r.status);
+  const data = await r.json();
+  return (data.photos || []).map(function (x) {
+    return { url: (x.src && (x.src.large2x || x.src.large)) || '', ratio: x.width && x.height ? x.width / x.height : 1.5, credit: 'Photo: ' + stripHtml(x.photographer || 'Pexels') + ' \u00b7 Pexels', pageUrl: x.url || '' };
+  }).filter(function (x) { return x.url; });
+}
+
+async function handlePhoto(body, res) {
+  const q = typeof body.query === 'string' ? body.query.trim().slice(0, 120) : '';
+  if (q.length < 2) { res.status(400).json({ error: 'bad_request', detail: 'query required' }); return; }
+  const dim = function (v) { v = Number(v); return isFinite(v) && v > 0 ? v : 1024; };
+  const want = dim(body.width) / dim(body.height);
+  const orient = want > 1.2 ? 'landscape' : (want < 0.85 ? 'portrait' : 'square');
+
+  const sources = [];
+  if (process.env.PEXELS_KEY) sources.push(['pexels', function () { return photoPexels(q, orient); }]);
+  sources.push(['wikimedia', function () { return photoWikimedia(q); }]);
+  sources.push(['openverse', function () { return photoOpenverse(q); }]);
+
+  const t0 = Date.now();
+  const reasons = [];
+  for (let i = 0; i < sources.length; i++) {
+    if (Date.now() - t0 > 22000) break;
+    let cands = [];
+    try { cands = await sources[i][1](); } catch (e) { reasons.push(String((e && e.message) || e)); continue; }
+    // prefer the search engine's own ranking, nudged toward the shape of the slot
+    cands = cands.map(function (c, idx) { return { c: c, score: idx * 0.12 + Math.abs(Math.log((c.ratio || 1.5) / want)) }; })
+      .sort(function (a, c) { return a.score - c.score; }).slice(0, 4);
+    for (let j = 0; j < cands.length; j++) {
+      try {
+        const img = await photoFetchBytes(cands[j].c.url, 3200000);
+        res.status(200).json({
+          image: 'data:' + img.mime + ';base64,' + img.b64,
+          credit: cands[j].c.credit, pageUrl: cands[j].c.pageUrl,
+          meta: { provider: sources[i][0], ms: Date.now() - t0 }
+        });
+        return;
+      } catch (e) { reasons.push(String((e && e.message) || e)); }
+    }
+    if (!cands.length) reasons.push(sources[i][0] + '_no_results');
+  }
+  res.status(502).json({ error: 'no_photo_found', detail: reasons.join('; ') || 'no_results' });
 }
 
 /* ── VISION (image analysis) ──────────────────────────────── */
