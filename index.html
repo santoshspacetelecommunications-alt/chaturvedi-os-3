@@ -291,7 +291,7 @@ header .hd-left,header .hd-right{display:flex;align-items:center;gap:6px}
 .deck-go,.deck-pres{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .deck-web,.deck-dl{background:none;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .deck-web:hover,.deck-dl:hover{border-color:var(--accent)}
-.deck-btns{justify-content:flex-start;gap:8px}
+.deck-actions.deck-btns{justify-content:flex-start;gap:8px}
 .deck-go:disabled,.deck-dl:disabled,.deck-web:disabled,.deck-pres:disabled{opacity:.65;cursor:default}
 .deck-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .deck-edit{font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:6px;cursor:pointer}
@@ -815,7 +815,15 @@ function fillImageCard(card, dataUrl, promptText, meta, ms) {
     });
     frame.appendChild(dl);
     frame.addEventListener('click', function () { openLightbox(dataUrl); });
-    if (meta && IMG_MODES[meta.mode]) {
+    if (meta && meta.credit) {
+      const c = el('div', 'reply-meta');
+      if (meta.pageUrl) {
+        const a = document.createElement('a');
+        a.href = meta.pageUrl; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = meta.credit; a.style.color = 'inherit';
+        c.appendChild(a);
+      } else { c.textContent = meta.credit; }
+      card.appendChild(c);
+    } else if (meta && IMG_MODES[meta.mode]) {
       const m = el('div', 'reply-meta', IMG_MODES[meta.mode].name + ' \u00b7 ' + (ms / 1000).toFixed(1) + ' s' + (meta.fellBack ? ' \u00b7 other engine' : ''));
       m.title = 'via ' + meta.provider + ' \u00b7 ' + meta.model;
       card.appendChild(m);
@@ -826,12 +834,21 @@ function fillImageCard(card, dataUrl, promptText, meta, ms) {
   img.alt = promptText;
   img.src = dataUrl;
 }
+function wantsRealPhoto(text) {
+  if (/\b(draw|sketch|paint|illustrate|generate|create|make|design|render|imagine|wallpaper)\b/i.test(text)) return false;
+  return /\b(show me|find me|find|get me|search for)\b[^.?!]*\b(photos?|pictures?|pics?|images?)\b|\b(photos?|pictures?|pics?|images?)\s+of\b|\bshow me (a|an|the|some)?\s*(real|actual)\b/i.test(text);
+}
+function photoQueryFrom(text) {
+  return text.replace(/\b(show me|find me|find|get me|search for|search|please|can you|could you|some|real|actual)\b/ig, ' ')
+    .replace(/\b(photos?|pictures?|pics?|images?)\s+of\b/ig, ' ').replace(/\b(photos?|pictures?|pics?|images?)\b/ig, ' ')
+    .replace(/\b(a|an|the)\b/ig, ' ').replace(/\s+/g, ' ').trim().slice(0, 100);
+}
 function failImageCard(card, err) {
   const frame = card.querySelector('.image-frame');
   frame.classList.remove('loading');
   const d = err && err.detail ? String(err.detail) : '';
   try { console.warn('Image generation failed:', d || (err && err.message)); } catch (e) {}
-  frame.innerHTML = '<div class="image-error">' + (/^no_image_keys/.test(d)
+  frame.innerHTML = '<div class="image-error" title="' + (/^no_image_keys/.test(d) ? 'Owner: add CF_ACCOUNT_ID + CF_API_TOKEN (Flash) or HF_TOKEN (Studio) in Vercel, redeploy, then open /api/backend?health=1 to check.' : '') + '">' + (/^no_image_keys/.test(d)
     ? 'The picture engines aren\u2019t connected yet, buddy.'
     : 'Couldn\u2019t create that image just now, buddy \u2014 the picture engines may be busy. Try again in a moment, or describe it a little differently.') + '</div>';
 }
@@ -1084,9 +1101,9 @@ function fileIntent(t) {
 }
 
 const DOCX_SYSTEM = 'You write Word documents such as reports, essays, letters, notes, assignments and resumes. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
-  + '{"title":"...","subtitle":"...","summary":"2 to 3 sentence overview","sections":[{"heading":"...","paragraphs":["..."],"bullets":["..."],"callout":"one key takeaway sentence","table":{"headers":["..."],"rows":[["..."]]}}]}. '
+  + '{"title":"...","subtitle":"...","summary":"2 to 3 sentence overview","sections":[{"heading":"...","paragraphs":["..."],"bullets":["..."],"callout":"one key takeaway sentence","photo":"optional real-photo search phrase","table":{"headers":["..."],"rows":[["..."]]}}]}. '
   + 'Rules: write full, well-developed paragraphs, not outlines. Match the length to the request (default 4 to 6 sections, about 600 to 900 words). '
-  + 'summary and callout are optional but make a long document easier to scan: use a summary for anything over one page and a callout for the single most important point of a section. heading, paragraphs, bullets and table are each optional per section. For a letter, put the subject in title and the salutation, body and closing as paragraphs in one section with no heading. '
+  + 'Add a "photo" to at most 3 sections, only when a real photograph of a place, object, event or public figure would genuinely help. summary and callout are optional but make a long document easier to scan: use a summary for anything over one page and a callout for the single most important point of a section. heading, paragraphs, bullets and table are each optional per section. For a letter, put the subject in title and the salutation, body and closing as paragraphs in one section with no heading. '
   + 'Plain text only, no markdown symbols like ** or #.';
 
 const XLSX_SYSTEM = 'You design spreadsheets. Reply with ONLY valid JSON, no commentary and no markdown fences, in exactly this shape: '
@@ -1171,9 +1188,40 @@ function docxTable(D, t) {
   return new D.Table({ width: { size: w * n, type: D.WidthType.DXA }, columnWidths: new Array(n).fill(w), rows: trs });
 }
 
-function buildDocx(spec, outType) {
+function dataUrlBytes(dataUrl) {
+  const b64 = String(dataUrl).split(',')[1] || '';
+  if (typeof atob === 'function') {
+    const bin = atob(b64), arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+  return new Uint8Array(Buffer.from(b64, 'base64'));
+}
+function loadImgDims(dataUrl) {
+  return new Promise(function (resolve) {
+    try {
+      const im = new Image();
+      im.onload = function () { resolve({ w: im.naturalWidth || 16, h: im.naturalHeight || 9 }); };
+      im.onerror = function () { resolve({ w: 16, h: 9 }); };
+      im.src = dataUrl;
+    } catch (e) { resolve({ w: 16, h: 9 }); }
+  });
+}
+async function buildDocx(spec, outType) {
   const D = docx;
   const kids = [];
+  const photos = {};
+  if (typeof generatePhoto === 'function') {
+    const jobs = [];
+    spec.sections.slice(0, 30).forEach(function (sec, idx) {
+      if (sec.photo && jobs.length < 3) {
+        jobs.push(generatePhoto(String(sec.photo), { w: 1024, h: 576 }).then(async function (r) {
+          photos[idx] = { r: r, dims: await loadImgDims(r.dataUrl) };
+        }).catch(function () {}));
+      }
+    });
+    await Promise.all(jobs);
+  }
   kids.push(new D.Paragraph({ heading: D.HeadingLevel.TITLE, children: [new D.TextRun({ text: String(spec.title || 'Document') })] }));
   const callout = function (text, label) {
     return new D.Paragraph({
@@ -1190,13 +1238,19 @@ function buildDocx(spec, outType) {
   }));
   if (spec.summary) kids.push(callout(spec.summary, 'Summary'));
 
-  spec.sections.slice(0, 30).forEach(function (sec) {
+  spec.sections.slice(0, 30).forEach(function (sec, idx) {
     if (sec.heading) {
       kids.push(new D.Paragraph({ heading: D.HeadingLevel.HEADING_1, children: [new D.TextRun({ text: String(sec.heading) })] }));
     }
     (Array.isArray(sec.paragraphs) ? sec.paragraphs : []).forEach(function (t) {
       kids.push(new D.Paragraph({ spacing: { after: 140, line: 300 }, children: [new D.TextRun({ text: String(t) })] }));
     });
+    const ph = photos[idx];
+    if (ph) {
+      const wpx = 470, hpx = Math.round(wpx * ph.dims.h / ph.dims.w);
+      kids.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: 120, after: 60 }, children: [new D.ImageRun({ data: dataUrlBytes(ph.r.dataUrl), transformation: { width: wpx, height: hpx } })] }));
+      if (ph.r.credit) kids.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 200 }, children: [new D.TextRun({ text: ph.r.credit, italics: true, color: '888888', size: 16 })] }));
+    }
     (Array.isArray(sec.bullets) ? sec.bullets : []).forEach(function (t) {
       kids.push(new D.Paragraph({ numbering: { reference: 'bul', level: 0 }, spacing: { after: 80 }, children: [new D.TextRun({ text: String(t) })] }));
     });
@@ -1264,6 +1318,22 @@ async function generateImage(prompt, o) {
   }
   return { dataUrl: j.image, meta: j.meta || null };
 }
+async function generatePhoto(query, o) {
+  o = o || {};
+  const res = await fetch('/api/backend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Chaturvedi-Key': APP_SECRET },
+    body: JSON.stringify({ type: 'photo', query: query, width: o.w || 1024, height: o.h || 576 })
+  });
+  let j = null;
+  try { j = await res.json(); } catch (e) {}
+  if (!res.ok || !j || !j.image) {
+    const err = new Error('photo_failed');
+    err.detail = (j && j.detail) || ('http_' + res.status);
+    throw err;
+  }
+  return { dataUrl: j.image, credit: j.credit || '', pageUrl: j.pageUrl || '', meta: j.meta || null };
+}
 function imageDimsFor(text) {
   if (/\b(wide|landscape|panoramic|banner)\b/i.test(text)) return { w: 1024, h: 576 };
   if (/\b(tall|portrait|vertical)\b/i.test(text)) return { w: 576, h: 1024 };
@@ -1305,11 +1375,12 @@ function deckImageSize(wIn, hIn) {
   if (ratio < 0.85) return { w: Math.round(1024 * ratio / 16) * 16, h: 1024 };
   return { w: 1024, h: 1024 };
 }
-function imgKey(prompt, wIn, hIn) {
-  const s = deckImageSize(wIn, hIn);
-  return 'i' + hashStr(String(prompt)) + '_' + s.w + 'x' + s.h;
+function imgKey(prompt, wIn, hIn, photo) {
+  const sz = deckImageSize(wIn, hIn);
+  return 'i' + hashStr((photo ? String(photo) + '|' : '') + String(prompt || '')) + '_' + sz.w + 'x' + sz.h;
 }
 const deckImgMem = {};
+const deckImgCredit = {};
 let deckImgActive = 0;
 const deckImgWait = [];
 function deckSlot() {
@@ -1322,18 +1393,32 @@ function deckSlotFree() {
   const next = deckImgWait.shift();
   if (next) { deckImgActive++; next(); }
 }
-function deckImageData(prompt, wIn, hIn) {
-  const key = imgKey(prompt, wIn, hIn);
+/* A picture slot is either a real photo found on the internet (photo) or an AI picture (prompt).
+   A photo that cannot be found falls back to an AI picture of the same subject. */
+function deckImageData(prompt, wIn, hIn, photo) {
+  const key = imgKey(prompt, wIn, hIn, photo);
   if (deckImgMem[key]) return deckImgMem[key];
   deckImgMem[key] = (async function () {
     const cached = await imgDbGet(key);
-    if (cached) return cached;
+    if (cached) {
+      if (typeof cached === 'string') return cached;
+      deckImgCredit[key] = cached.c || '';
+      return cached.d;
+    }
     await deckSlot();
     try {
-      const s = deckImageSize(wIn, hIn);
-      const r = await generateImage(String(prompt) + ', cinematic lighting, rich detail, no text, no watermark', { w: s.w, h: s.h });
-      imgDbPut(key, r.dataUrl);
-      return r.dataUrl;
+      const sz = deckImageSize(wIn, hIn);
+      let data = null, credit = '';
+      if (photo) {
+        try { const r = await generatePhoto(String(photo), { w: sz.w, h: sz.h }); data = r.dataUrl; credit = r.credit || ''; } catch (e) {}
+      }
+      if (!data) {
+        const r2 = await generateImage(String(prompt || photo) + ', cinematic lighting, rich detail, no text, no watermark', { w: sz.w, h: sz.h });
+        data = r2.dataUrl;
+      }
+      deckImgCredit[key] = credit;
+      imgDbPut(key, { d: data, c: credit });
+      return data;
     } catch (e) {
       delete deckImgMem[key];
       return null;
@@ -1343,7 +1428,6 @@ function deckImageData(prompt, wIn, hIn) {
   })();
   return deckImgMem[key];
 }
-
 
 /* ══════════════════════════════════════════════════════════
    SLIDES ENGINE — one layout source drives the live preview,
@@ -1407,15 +1491,17 @@ function normDeck(spec) {
   spec.title = String(spec.title || 'Presentation');
   spec.subtitle = spec.subtitle ? String(spec.subtitle) : '';
   spec.image = spec.image ? String(spec.image).slice(0, 280) : '';
-  let imgCount = spec.image ? 1 : 0;
+  spec.photo = spec.photo ? String(spec.photo).slice(0, 120) : '';
+  let imgCount = (spec.image || spec.photo) ? 1 : 0;
   spec.slides = (Array.isArray(spec.slides) ? spec.slides : []).slice(0, 19).map(function (sl) {
     sl = sl && typeof sl === 'object' ? sl : {};
     let L = DECK_LAYOUTS.indexOf(sl.layout) !== -1 ? sl.layout : 'bullets';
     sl.title = String(sl.title || '');
     sl.notes = sl.notes ? String(sl.notes) : '';
     sl.image = sl.image ? String(sl.image).slice(0, 280) : '';
-    if (L !== 'bullets' && L !== 'image') sl.image = '';
-    if (sl.image) { if (imgCount >= 4) sl.image = ''; else imgCount++; }
+    sl.photo = sl.photo ? String(sl.photo).slice(0, 120) : '';
+    if (L !== 'bullets' && L !== 'image') { sl.image = ''; sl.photo = ''; }
+    if (sl.image || sl.photo) { if (imgCount >= 5) { sl.image = ''; sl.photo = ''; } else imgCount++; }
     if (L === 'bullets') {
       sl.bullets = asArr(sl.bullets).slice(0, 7);
       sl.takeaway = sl.takeaway ? String(sl.takeaway) : '';
@@ -1456,7 +1542,7 @@ function normDeck(spec) {
       sl.kicker = sl.kicker ? String(sl.kicker).slice(0, 40) : '';
     } else if (L === 'image') {
       sl.caption = sl.caption ? String(sl.caption) : '';
-      if (!sl.image) L = 'statement';
+      if (!sl.image && !sl.photo) L = 'statement';
     } else if (L === 'section' || L === 'closing') {
       sl.subtitle = sl.subtitle ? String(sl.subtitle) : '';
     }
@@ -1466,9 +1552,9 @@ function normDeck(spec) {
   return spec;
 }
 function deckSlides(spec) {
-  return [{ layout: 'cover', title: spec.title, subtitle: spec.subtitle, image: spec.image || '', notes: '' }].concat(spec.slides);
+  return [{ layout: 'cover', title: spec.title, subtitle: spec.subtitle, image: spec.image || '', photo: spec.photo || '', notes: '' }].concat(spec.slides);
 }
-function deckHasImages(spec) { return deckSlides(spec).some(function (s) { return !!s.image; }); }
+function deckHasImages(spec) { return deckSlides(spec).some(function (s) { return !!(s.image || s.photo); }); }
 function pickTheme(spec, look) {
   if (spec && THEMES[spec.theme]) return spec.theme;
   return ({ ink: 'midnight', ember: 'sunrise', volt: 'ocean', fog: 'paper', nova: 'paper' })[look] || 'midnight';
@@ -1478,7 +1564,7 @@ function pickTheme(spec, look) {
 function slideElements(sl, T, i, N, ctx) {
   ctx = ctx || {};
   const els = [];
-  const imgOn = ctx.images !== false && !!sl.image;
+  const imgOn = ctx.images !== false && !!(sl.image || sl.photo);
   // i = deck index (0 is the cover); slide i lives at spec.slides[i-1]
   const P = function () {
     const rest = Array.prototype.slice.call(arguments, 1); // first argument is the deck index, already known as i
@@ -1486,7 +1572,7 @@ function slideElements(sl, T, i, N, ctx) {
   };
   const R = function (x, y, w, h, fill, o) { return Object.assign({ k: 'rect', x: x, y: y, w: w, h: h, fill: fill }, o || {}); };
   const Tx = function (x, y, w, h, o) { return Object.assign({ k: 'text', x: x, y: y, w: w, h: h, size: 18, color: T.fg, font: BODY_FONT, align: 'left', valign: 'top' }, o); };
-  const Im = function (x, y, w, h, prompt) { return { k: 'image', x: x, y: y, w: w, h: h, prompt: prompt }; };
+  const Im = function (x, y, w, h, prompt, photo) { return { k: 'image', x: x, y: y, w: w, h: h, prompt: prompt, photo: photo || '' }; };
   const heading = function () {
     const sz = fitPt([sl.title || ''], 11.7, 1.0, 34, 22, { cw: 0.56, lh: 1.15 });
     els.push(Tx(0.8, 0.5, 11.7, 1.0, { text: sl.title || '', size: sz, bold: true, font: HEAD_FONT, valign: 'middle', bind: P(i, 'title') }));
@@ -1502,7 +1588,7 @@ function slideElements(sl, T, i, N, ctx) {
   if (L === 'cover' || L === 'closing') {
     let tc = T.fg, sc = T.muted;
     if (imgOn) {
-      els.push(Im(0, 0, 13.333, 7.5, sl.image));
+      els.push(Im(0, 0, 13.333, 7.5, sl.image, sl.photo));
       scrim(0, 0, 13.333, 7.5, 0.2);
       fade(0, 0, 11.5, 7.5, 0.55, 'right');
       tc = 'FFFFFF'; sc = 'E3E3EC';
@@ -1539,7 +1625,7 @@ function slideElements(sl, T, i, N, ctx) {
 
   if (L === 'image') {
     if (imgOn) {
-      els.push(Im(0, 0, 13.333, 7.5, sl.image));
+      els.push(Im(0, 0, 13.333, 7.5, sl.image, sl.photo));
       fade(0, 2.4, 13.333, 5.1, 0.7, 'up');
       els.push(R(0.8, 4.65, 1.1, 0.07, T.accent));
       const ts = fitPt([sl.title || ''], 11.7, 1.3, 46, 26, { cw: 0.56, lh: 1.15 });
@@ -1576,7 +1662,7 @@ function slideElements(sl, T, i, N, ctx) {
     const sz = fitPt(arr, w, 4.7, (imgOn || hasK) ? 24 : 28, 15, { indent: 0.42, gap: 0.16 });
     els.push(Tx(0.8, 1.95, w, 4.8, { lines: arr, bullet: true, size: sz, gap: 0.16, kind: 'list', bind: P(i, 'bullets') }));
     if (imgOn) {
-      els.push(Im(8.6, 1.95, 3.9, 4.6, sl.image));
+      els.push(Im(8.6, 1.95, 3.9, 4.6, sl.image, sl.photo));
     } else if (hasK) {
       els.push(R(8.6, 1.95, 3.9, 4.6, T.card, { radius: 0.15 }));
       els.push(R(8.6, 1.95, 0.08, 4.6, T.accent));
@@ -1641,9 +1727,12 @@ function addPptxEl(pptx, s, e, T, dataMap) {
     if (e.radius && type === pptx.ShapeType.roundRect) o.rectRadius = e.radius;
     s.addShape(type, o);
   } else if (e.k === 'image') {
-    const data = dataMap && dataMap[imgKey(e.prompt, e.w, e.h)];
+    const key = imgKey(e.prompt, e.w, e.h, e.photo);
+    const data = dataMap && dataMap[key];
     if (data) {
       s.addImage({ data: String(data).replace(/^data:/, ''), x: e.x, y: e.y, w: e.w, h: e.h, sizing: { type: 'cover', w: e.w, h: e.h } });
+      const cr = (typeof deckImgCredit !== 'undefined') && deckImgCredit[key];
+      if (cr) s.addText(cr, { x: e.x + 0.1, y: e.y + 0.08, w: e.w - 0.2, h: 0.28, fontSize: 9, color: 'FFFFFF', align: 'right', valign: 'top', margin: 0, fontFace: BODY_FONT });
     } else {
       s.addShape(pptx.ShapeType.rect, { x: e.x, y: e.y, w: e.w, h: e.h, fill: { color: T.card }, line: { type: 'none' } });
     }
@@ -1689,10 +1778,10 @@ async function buildPptxDeck(spec, themeKey, outType, ctx) {
   all.forEach(function (els) {
     els.forEach(function (x) {
       if (x.k !== 'image') return;
-      const k = imgKey(x.prompt, x.w, x.h);
+      const k = imgKey(x.prompt, x.w, x.h, x.photo);
       if (k in dataMap) return;
       dataMap[k] = null;
-      jobs.push(deckImageData(x.prompt, x.w, x.h).then(function (d) { dataMap[k] = d; }));
+      jobs.push(deckImageData(x.prompt, x.w, x.h, x.photo).then(function (d) { dataMap[k] = d; }));
     });
   });
   await Promise.all(jobs);
@@ -1776,14 +1865,20 @@ function deckElNode(e, T, editable, ctx) {
     d.setAttribute('data-img', '1');
     const img = document.createElement('img');
     img.alt = '';
-    const pre = ctx && ctx.imageData && ctx.imageData[imgKey(e.prompt, e.w, e.h)];
+    const key = imgKey(e.prompt, e.w, e.h, e.photo);
+    const pre = ctx && ctx.imageData && ctx.imageData[key];
+    const addCredit = function () {
+      const c = deckImgCredit[key];
+      if (c) { const cr = document.createElement('div'); cr.className = 'credit'; cr.textContent = c; d.appendChild(cr); }
+    };
     if (pre) {
       img.setAttribute('src', pre);
+      addCredit();
     } else {
       d.classList.add('shim');
-      deckImageData(e.prompt, e.w, e.h).then(function (data) {
+      deckImageData(e.prompt, e.w, e.h, e.photo).then(function (data) {
         d.classList.remove('shim');
-        if (data) img.setAttribute('src', data); else img.remove();
+        if (data) { img.setAttribute('src', data); addCredit(); } else img.remove();
       });
     }
     d.appendChild(img);
@@ -1867,6 +1962,7 @@ const DECK_SL_CSS = '.sl{position:absolute;left:0;top:0;width:1333px;height:750p
   + '.sl .bl{position:relative;padding-left:42px}'
   + '.sl .bl::before{content:"";position:absolute;left:8px;top:.5em;width:.3em;height:.3em;border-radius:50%;background:var(--ac)}'
   + '.sl .e img{width:100%;height:100%;object-fit:cover;display:block}'
+  + '.sl .e .credit{position:absolute;right:10px;top:8px;max-width:92%;font-size:11px;line-height:1.2;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);opacity:.85;text-align:right;font-family:Calibri,Carlito,Arial,sans-serif;pointer-events:none}'
   + '.sl .e.shim{background-image:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.09) 50%,transparent 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}'
   + '@keyframes shim{from{background-position:200% 0}to{background-position:-200% 0}}';
 const DECK_PLAYER_CSS = '.pz{position:fixed;left:0;top:0;right:0;bottom:0;background:#000;z-index:300;overflow:hidden;font-family:Calibri,Carlito,Arial,sans-serif;-webkit-user-select:none;user-select:none}'
@@ -2032,10 +2128,10 @@ async function buildDeckHTML(spec, themeKey, imagesOn) {
   slides.forEach(function (sl, i) {
     slideElements(sl, T, i, slides.length, { images: imagesOn }).forEach(function (x) {
       if (x.k !== 'image') return;
-      const k = imgKey(x.prompt, x.w, x.h);
+      const k = imgKey(x.prompt, x.w, x.h, x.photo);
       if (k in imageData) return;
       imageData[k] = null;
-      jobs.push(deckImageData(x.prompt, x.w, x.h).then(function (data) { imageData[k] = data; }));
+      jobs.push(deckImageData(x.prompt, x.w, x.h, x.photo).then(function (data) { imageData[k] = data; }));
     });
   });
   await Promise.all(jobs);
@@ -2216,7 +2312,7 @@ function addDeckCard(spec, themeKey, opts) {
 }
 
 const PPT_SYSTEM = 'You are a world-class presentation designer and storyteller. Reply with ONLY valid JSON, no commentary and no markdown fences, in this shape: '
-  + '{"title":"...","subtitle":"...","theme":"midnight|paper|sunrise|forest|ocean","image":"visual description for the cover","slides":[...]}. '
+  + '{"title":"...","subtitle":"...","theme":"midnight|paper|sunrise|forest|ocean","image":"optional AI picture description for the cover","photo":"optional real-photo search phrase for the cover","slides":[...]}. '
   + 'The cover slide is added automatically from title, subtitle and image, so do not include it. Every slide object has a "layout", plus "notes" (2 to 3 sentences the speaker could say out loud), plus the fields of its layout: '
   + '(1) bullets: {"layout":"bullets","title":"...","bullets":["3 to 5 short bullets, max 14 words each"],"takeaway":"optional one-sentence key idea","image":"optional visual description, shown instead of the takeaway"}. '
   + '(2) two_column: {"layout":"two_column","title":"...","left":{"heading":"...","bullets":["..."]},"right":{"heading":"...","bullets":["..."]}}. '
@@ -2229,7 +2325,7 @@ const PPT_SYSTEM = 'You are a world-class presentation designer and storyteller.
   + '(9) image: {"layout":"image","title":"headline","caption":"one line","image":"visual description"} for a dramatic full-screen picture. '
   + '(10) section: {"layout":"section","title":"...","subtitle":"..."}. (11) closing: {"layout":"closing","title":"...","subtitle":"..."}. '
   + 'Craft: tell a story. Open with a hook, build to an insight, prove it with specifics, and end with a call to action. Slide titles are claims, not topics (write "Hamilton rebuilt his career at 40", not "Career"). One idea per slide. Use a statement slide for the single most important sentence, and a stats or chart slide whenever real numbers exist. '
-  + 'Images: "image" fields are short visual descriptions of a scene, object or illustration (subject, setting, mood, style), never text, logos, brand names or real named people. Use images on at most 4 slides in total, including the cover. '
+  + 'Pictures: every slot that takes an "image" can instead take a "photo". Use "photo" (a short search phrase such as "Ferrari SF-24 Formula 1 car" or "Taj Mahal at sunrise") when the subject is a real place, object, event, animal or public figure: Trishul will find a real photograph on the internet and credit it. Use "image" (a short visual description of a scene, subject, mood and style) for imaginative, abstract or conceptual pictures, which are AI-generated; never put a real person\'s name or any text, logo or brand name in "image". Prefer real photos for factual topics. Use pictures on at most 5 slides in total, including the cover. '
   + 'Rules: use the number of slides the person asked for (the cover counts as one), otherwise about 9 in total. Vary the layouts: at least 4 different ones when there are 6 or more slides, and end decks of 6 or more with a closing slide. '
   + 'Content must be specific and accurate, with real facts and numbers; use any web information supplied in the message and never invent statistics. '
   + 'Pick the theme that suits the topic: midnight for tech and space, paper for business and school, sunrise for warm or creative topics, forest for nature and health, ocean for science, water and sports. Plain text only, no markdown symbols.';
@@ -2517,10 +2613,12 @@ function renderKritiForm() {
   const opts = document.getElementById('krOpts');
   if (krKind === 'pptx') {
     opts.innerHTML = selectOpt('Slides', 'krCount', [['', 'Auto'], ['5', '5'], ['8', '8'], ['12', '12']])
-      + selectOpt('Theme', 'krTheme', [['', 'Auto'], ['midnight', 'Midnight'], ['paper', 'Paper'], ['sunrise', 'Sunrise'], ['forest', 'Forest'], ['ocean', 'Ocean']]);
+      + selectOpt('Theme', 'krTheme', [['', 'Auto'], ['midnight', 'Midnight'], ['paper', 'Paper'], ['sunrise', 'Sunrise'], ['forest', 'Forest'], ['ocean', 'Ocean']])
+      + selectOpt('Pictures', 'krPics', [['', 'Auto (real photos + AI)'], ['photo', 'Real photos'], ['image', 'AI images'], ['none', 'None']]);
   } else if (krKind === 'docx') {
     opts.innerHTML = selectOpt('Length', 'krLen', [['', 'Standard'], ['short', 'Short (about 1 page)'], ['long', 'Detailed']])
-      + selectOpt('Tone', 'krTone', [['', 'Clear'], ['formal', 'Formal'], ['friendly', 'Friendly'], ['academic', 'Academic']]);
+      + selectOpt('Tone', 'krTone', [['', 'Clear'], ['formal', 'Formal'], ['friendly', 'Friendly'], ['academic', 'Academic']])
+      + selectOpt('Photos', 'krPics', [['', 'Auto (where useful)'], ['none', 'None']]);
   } else {
     opts.innerHTML = selectOpt('Formulas', 'krForm', [['yes', 'Include totals and formulas'], ['no', 'Data only']]);
   }
@@ -2537,6 +2635,13 @@ function krVal(id) { const e = document.getElementById(id); return e ? e.value :
 function composeKritiPrompt(text) {
   let t = text;
   if (krKind === 'pptx' && krVal('krCount')) t += '\nUse exactly ' + krVal('krCount') + ' slides in total, cover included.';
+  if (krKind === 'pptx') {
+    const pv = krVal('krPics');
+    if (pv === 'photo') t += '\nFor every picture use "photo" (real internet photographs) and never "image".';
+    if (pv === 'image') t += '\nFor every picture use "image" (AI-generated pictures) and never "photo".';
+    if (pv === 'none') t += '\nDo not include any pictures.';
+  }
+  if (krKind === 'docx' && krVal('krPics') === 'none') t += '\nDo not include any photos.';
   if (krKind === 'docx') {
     const len = krVal('krLen'), tone = krVal('krTone');
     if (len === 'short') t += '\nKeep it to about one page (350 to 450 words).';
@@ -2694,6 +2799,29 @@ async function sendMessage(rawText) {
   if (isImageIntent(text) && !attachedNow.length) {
     const card = addImageCard(text.length > 60 ? text.slice(0, 60) + '\u2026' : text);
     setOrbState('thinking');
+    if (wantsRealPhoto(text)) {
+      const q = photoQueryFrom(text) || text;
+      const tp = Date.now();
+      let okp = false;
+      try {
+        const r = await generatePhoto(q, /\b(portrait|tall|vertical)\b/i.test(text) ? { w: 640, h: 1024 } : { w: 1024, h: 640 });
+        fillImageCard(card, r.dataUrl, q, { credit: r.credit, pageUrl: r.pageUrl, provider: r.meta && r.meta.provider }, Date.now() - tp);
+        okp = true;
+      } catch (e0) {
+        try {
+          const r1 = await generateImage(await enhanceImagePrompt(text), imageDimsFor(text));
+          fillImageCard(card, r1.dataUrl, q, r1.meta, Date.now() - tp);
+          okp = true;
+        } catch (e1) { failImageCard(card, e1); }
+      }
+      const notep = okp ? '[Found a picture: ' + q.slice(0, 80) + ']' : '[Could not find a picture]';
+      history.push({ role: 'assistant', content: notep });
+      persistTurn('assistant', notep);
+      setOrbState('idle');
+      busy = false;
+      updateComposerState();
+      return;
+    }
     const enhancedPrompt = await enhanceImagePrompt(text);
     const dims = imageDimsFor(text);
     const plainFallback = (text.replace(IMAGE_PATTERN, '').replace(/^\s*of\s+/i, '').trim() || text).slice(0, 200);
