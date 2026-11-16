@@ -364,6 +364,53 @@ body[data-tab="kriti"] #stream,body[data-tab="kriti"] #attachRow,body[data-tab="
 .sources span{font-size:11px;color:var(--text-tertiary);margin-right:2px}
 .src{font-size:12px;color:var(--text-secondary);border:1px solid var(--border);border-radius:999px;padding:3px 10px;text-decoration:none}
 .src:hover{border-color:var(--accent);color:var(--text)}
+
+#app{z-index:1}
+#bgLayer{position:fixed;left:0;top:0;right:0;bottom:0;z-index:0;overflow:hidden;pointer-events:none;background:var(--bg)}
+#bgLayer .bg-art,#bgLayer .bg-img,#bgLayer .bg-dim,#bgLayer .bg-canvas{position:absolute;left:0;top:0;width:100%;height:100%}
+#bgLayer .bg-img{display:none;background-size:cover;background-position:center;transform:scale(1.06)}
+#bgLayer .bg-dim{background:var(--bg);opacity:0}
+.bg-aurora{background:radial-gradient(60% 50% at 20% 20%,rgba(var(--acc),.38),transparent 70%),radial-gradient(50% 45% at 80% 30%,rgba(90,200,220,.26),transparent 70%),radial-gradient(60% 50% at 50% 95%,rgba(180,90,220,.26),transparent 70%);filter:blur(30px);animation:auroraMove 22s ease-in-out infinite alternate}
+@keyframes auroraMove{0%{transform:translate3d(-3%,-2%,0) scale(1.05)}100%{transform:translate3d(3%,3%,0) scale(1.18)}}
+.bg-mesh{background:radial-gradient(at 10% 15%,rgba(var(--acc),.34) 0,transparent 45%),radial-gradient(at 90% 10%,rgba(80,170,255,.22) 0,transparent 45%),radial-gradient(at 80% 90%,rgba(255,120,170,.2) 0,transparent 50%),radial-gradient(at 15% 85%,rgba(120,255,200,.14) 0,transparent 45%)}
+.bg-grid{background-image:linear-gradient(rgba(var(--acc),.15) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--acc),.15) 1px,transparent 1px),radial-gradient(60% 50% at 50% 0%,rgba(var(--acc),.26),transparent 70%);background-size:48px 48px,48px 48px,100% 100%;-webkit-mask-image:linear-gradient(to bottom,#000 30%,transparent 95%);mask-image:linear-gradient(to bottom,#000 30%,transparent 95%);animation:gridDrift 30s linear infinite}
+@keyframes gridDrift{to{background-position:48px 48px,48px 48px,0 0}}
+@media(prefers-reduced-motion:reduce){.bg-aurora,.bg-grid{animation:none}}
+body[data-bg="on"] .msg.assistant:not(.deck):not(.file-card):not(.image-card){background:rgba(var(--bgrgb),.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:18px;padding:14px 18px}
+body[data-bg="on"][data-frost="off"] .msg.assistant:not(.deck):not(.file-card):not(.image-card){background:none;-webkit-backdrop-filter:none;backdrop-filter:none;border:none;border-radius:0;padding:0}
+body[data-bg="on"] .home-hello,body[data-bg="on"] .home-sub{text-shadow:0 1px 12px rgba(var(--bgrgb),.9)}
+#voicePanel,#backdropPanel{top:50%;left:50%;transform:translate(-50%,-50%);width:min(460px,calc(100vw - 24px));max-height:88vh;overflow-y:auto;padding:24px}
+#voicePanel .about-title,#backdropPanel .about-title{margin-bottom:14px}
+.set-row{display:flex;flex-direction:column;gap:6px;margin:0 0 14px;text-align:left}
+.set-row label,.set-label{font-size:11px;color:var(--text-tertiary);letter-spacing:.04em;text-transform:uppercase}
+.set-row select{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 10px;font-family:inherit;font-size:13.5px;width:100%}
+.set-range{display:flex;align-items:center;gap:10px}
+.set-range input[type=range]{flex:1;accent-color:var(--accent)}
+.set-range output{font-size:12px;color:var(--text-tertiary);min-width:48px;text-align:right}
+#bdPrompt{flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 11px;font-family:inherit;font-size:13.5px;outline:none}
+#bdPrompt:focus{border-color:var(--accent)}
+.preset-row{display:flex;flex-wrap:wrap;gap:7px}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.set-hint{font-size:12px;color:var(--text-tertiary);line-height:1.55;margin:2px 0 12px;text-align:left}
+.set-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.set-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin:6px 0 10px;text-align:left}
+.bd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:9px;margin-bottom:14px}
+.bd-tile{position:relative;height:62px;border-radius:12px;border:2px solid var(--border);background-color:var(--bg);color:#fff;font-family:inherit;font-size:11.5px;cursor:pointer;overflow:hidden;display:flex;align-items:flex-end;padding:6px 8px;text-align:left;background-size:cover;background-position:center}
+.bd-tile span{text-shadow:0 1px 4px rgba(0,0,0,.85)}
+.bd-tile.on{border-color:var(--accent)}
+.bd-x{position:absolute;top:1px;right:6px;font-style:normal;font-size:17px;color:#fff;text-shadow:0 1px 3px #000;cursor:pointer}
+.bd-prev-none{background:var(--bg-elevated)}
+.bd-prev-none span{color:var(--text-secondary);text-shadow:none}
+.bd-prev-aurora{background:radial-gradient(60% 70% at 20% 30%,rgba(var(--acc),.75),transparent 70%),radial-gradient(50% 60% at 80% 60%,rgba(90,200,220,.55),transparent 70%),#0d1020}
+.bd-prev-mesh{background:radial-gradient(at 10% 15%,rgba(var(--acc),.7) 0,transparent 55%),radial-gradient(at 90% 15%,rgba(80,170,255,.5) 0,transparent 55%),radial-gradient(at 80% 95%,rgba(255,120,170,.5) 0,transparent 55%),#10121f}
+.bd-prev-stars{background:radial-gradient(1.2px 1.2px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 70% 20%,#fff,transparent),radial-gradient(1.4px 1.4px at 50% 65%,#fff,transparent),radial-gradient(1px 1px at 85% 75%,#fff,transparent),radial-gradient(1px 1px at 12% 80%,#fff,transparent),#070a16}
+.bd-prev-waves{background:repeating-radial-gradient(120% 60% at 50% 130%,rgba(var(--acc),.55) 0 6px,transparent 6px 16px),#0b1222}
+.bd-prev-rain{background:repeating-linear-gradient(100deg,rgba(170,190,255,.5) 0 1px,transparent 1px 9px),#0a0e1c}
+.bd-prev-bokeh{background:radial-gradient(circle at 25% 35%,rgba(var(--acc),.7) 0 14px,transparent 15px),radial-gradient(circle at 70% 55%,rgba(255,255,255,.35) 0 18px,transparent 19px),radial-gradient(circle at 45% 80%,rgba(var(--acc),.45) 0 10px,transparent 11px),#0d1020}
+.bd-prev-grid{background-image:linear-gradient(rgba(var(--acc),.5) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--acc),.5) 1px,transparent 1px);background-size:14px 14px;background-color:#0b1020}
+.bd-prev-trident{background:radial-gradient(circle at 30% 40%,rgba(var(--acc),.4) 0 3px,transparent 4px),radial-gradient(circle at 70% 65%,rgba(var(--acc),.4) 0 3px,transparent 4px),#0d1020}
+.bd-prev-hills{background:linear-gradient(to bottom,#1c2142 0%,rgba(var(--acc),.55) 100%)}
+.bd-prev-grain{background:#1a1a20}
 </style>
 </head>
 <body>
@@ -461,6 +508,8 @@ body[data-tab="kriti"] #stream,body[data-tab="kriti"] #attachRow,body[data-tab="
   <div class="sheet-item" id="newChatItem"><span>New chat</span></div>
   <div class="sheet-item" id="exportItem"><span>Export conversation</span></div>
   <div class="sheet-item" id="personalizeItem"><span>Personalize</span></div>
+  <div class="sheet-item" id="voiceItem2"><span>Language &amp; voice</span></div>
+  <div class="sheet-item" id="backdropItem"><span>Backdrop</span></div>
   <div class="sheet-div"></div>
   <div class="sheet-item" id="voiceItem"><span>Voice replies</span><span class="val" id="voiceLabel">On</span></div>
   <div class="sheet-div"></div>
@@ -491,6 +540,33 @@ body[data-tab="kriti"] #stream,body[data-tab="kriti"] #attachRow,body[data-tab="
     <button class="save-personalize" id="personalizeSave">Save</button>
     <button class="close-about" id="personalizeClose">Close</button>
   </div>
+</div>
+
+<div class="sheet" id="voicePanel" hidden>
+  <div class="about-title">Language &amp; voice</div>
+  <div class="set-row"><label for="replyLangSel">Trishul replies in</label><select id="replyLangSel"></select></div>
+  <div class="set-row"><label for="listenLangSel">I speak (microphone)</label><select id="listenLangSel"></select></div>
+  <div class="set-row"><label for="voiceSel">Voice</label><select id="voiceSel"></select></div>
+  <div class="set-row"><span class="set-label">Style</span><div class="preset-row" id="presetRow"></div></div>
+  <div class="set-row"><label for="rateRange">Speed</label><div class="set-range"><input id="rateRange" type="range" min="0.6" max="1.6" step="0.05" value="1"><output id="rateVal">1.00&times;</output></div></div>
+  <div class="set-row"><label for="pitchRange">Pitch</label><div class="set-range"><input id="pitchRange" type="range" min="0.5" max="1.6" step="0.05" value="1"><output id="pitchVal">1.00</output></div></div>
+  <label class="set-check"><input type="checkbox" id="voiceOnBox"> Read replies aloud</label>
+  <p class="set-hint" id="voiceCount"></p>
+  <p class="set-hint">Voices come from your browser and device. Chrome includes Google voices for many languages, and Windows can add more under Settings, Time &amp; language, Speech. Replies can be written in any language, though quality varies for rarer ones, and Trishul will say so when it is unsure.</p>
+  <div class="set-actions"><button class="save-personalize" id="voicePreview">&#9654; Preview</button><button class="close-about" id="voiceClose">Close</button></div>
+</div>
+
+<div class="sheet" id="backdropPanel" hidden>
+  <div class="about-title">Backdrop</div>
+  <div class="bd-grid" id="bdGrid"></div>
+  <div class="set-actions" style="justify-content:flex-start"><button class="close-about" id="bdUpload">Upload your own</button><input type="file" id="bdFile" accept="image/*" hidden></div>
+  <div class="set-row" style="margin-top:14px"><label for="bdPrompt">Or let Trishul paint one</label>
+    <div class="set-range"><input id="bdPrompt" placeholder="e.g. misty mountains at sunrise" maxlength="120" autocomplete="off"><button class="save-personalize" id="bdAi">Create with AI</button></div></div>
+  <p class="set-hint" id="bdMsg"></p>
+  <div class="set-row"><label for="dimRange">Dim</label><div class="set-range"><input id="dimRange" type="range" min="0" max="85" step="1" value="0"><output id="dimVal">0%</output></div></div>
+  <div class="set-row"><label for="blurRange">Blur (pictures)</label><div class="set-range"><input id="blurRange" type="range" min="0" max="24" step="1" value="0"><output id="blurVal">0 px</output></div></div>
+  <label class="set-check"><input type="checkbox" id="frostBox" checked> Frosted message panels (easier to read)</label>
+  <div class="set-actions"><button class="close-about" id="backdropClose">Close</button></div>
 </div>
 
 <div id="lightbox">
@@ -705,7 +781,7 @@ function systemPrompt(messageText) {
     + "Be direct and genuinely useful. Match your depth to the question \u2014 thorough when it matters, brief when it doesn't. Use markdown formatting (headings, lists, code blocks) only when it actually helps comprehension. If you're unsure about something, say so plainly rather than guessing confidently.\n\n"
     + "You have real depth in mathematics and physics \u2014 when a question calls for it, show full working, not just a final answer.\n\n"
     + "For medical, legal, or financial questions, give useful information but note you're not a licensed professional.\n\n"
-    + "Today is " + dateStr + "." + memoryBlock() + "\n\n"
+    + "Today is " + dateStr + "." + memoryBlock() + languageBlock() + "\n\n"
     + TRISHUL_CONSTITUTION;
 
   if (messageText) prompt += domainHint(messageText);
@@ -886,15 +962,157 @@ function chunkText(text, max) {
   if (cur.trim()) chunks.push(cur.trim());
   return chunks;
 }
-function pickVoice() {
-  const voices = window.speechSynthesis.getVoices();
-  return voices.find(function (v) { return v.lang && v.lang.indexOf('en') === 0; }) || voices[0];
+/* ══════════════════════════════════════════════════════════
+   LANGUAGE & VOICE — Trishul answers in any language, speaks it
+   with a matching voice, and listens in the language you choose.
+   Voices come from the browser/device (Chrome has Google voices
+   for many languages; Windows can add more).
+   ══════════════════════════════════════════════════════════ */
+const LANGS = [
+  ['en', 'English', 'English', 'en-US'], ['hi', 'Hindi', '\u0939\u093F\u0928\u094D\u0926\u0940', 'hi-IN'], ['hinglish', 'Hinglish (Hindi in English letters)', 'Hinglish', 'en-IN'],
+  ['bn', 'Bengali', '\u09AC\u09BE\u0982\u09B2\u09BE', 'bn-IN'], ['ta', 'Tamil', '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD', 'ta-IN'], ['te', 'Telugu', '\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41', 'te-IN'],
+  ['mr', 'Marathi', '\u092E\u0930\u093E\u0920\u0940', 'mr-IN'], ['gu', 'Gujarati', '\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0', 'gu-IN'], ['kn', 'Kannada', '\u0C95\u0CA8\u0CCD\u0CA8\u0CA1', 'kn-IN'],
+  ['ml', 'Malayalam', '\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02', 'ml-IN'], ['pa', 'Punjabi', '\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40', 'pa-IN'], ['ur', 'Urdu', '\u0627\u0631\u062F\u0648', 'ur-PK'],
+  ['or', 'Odia', '\u0B13\u0B21\u0B3C\u0B3F\u0B06', 'or-IN'], ['as', 'Assamese', '\u0985\u09B8\u09AE\u09C0\u09AF\u09BC\u09BE', 'as-IN'], ['ne', 'Nepali', '\u0928\u0947\u092A\u093E\u0932\u0940', 'ne-NP'],
+  ['sa', 'Sanskrit', '\u0938\u0902\u0938\u094D\u0915\u0943\u0924\u092E\u094D', 'hi-IN'], ['sd', 'Sindhi', '\u0633\u0646\u068C\u064A', 'sd-PK'], ['kok', 'Konkani', '\u0915\u094B\u0902\u0915\u0923\u0940', 'hi-IN'],
+  ['mai', 'Maithili', '\u092E\u0948\u0925\u093F\u0932\u0940', 'hi-IN'], ['bho', 'Bhojpuri', '\u092D\u094B\u091C\u092A\u0941\u0930\u0940', 'hi-IN'], ['raj', 'Rajasthani', '\u0930\u093E\u091C\u0938\u094D\u0925\u093E\u0928\u0940', 'hi-IN'],
+  ['ks', 'Kashmiri', '\u0643\u0672\u0634\u064F\u0631', 'ur-PK'], ['doi', 'Dogri', '\u0921\u094B\u0917\u0930\u0940', 'hi-IN'], ['sat', 'Santali', '\u1C65\u1C5F\u1C71\u1C5B\u1C5F\u1C72\u1C64', 'hi-IN'],
+  ['mni', 'Manipuri (Meitei)', '\u09AE\u09C8\u09A4\u09C8\u09B2\u09CB\u09A8\u09CD', 'bn-IN'], ['brx', 'Bodo', '\u092C\u0921\u093C\u094B', 'hi-IN'], ['tcy', 'Tulu', '\u0CA4\u0CC1\u0CB3\u0CC1', 'kn-IN'],
+  ['es', 'Spanish', 'Espa\u00F1ol', 'es-ES'], ['fr', 'French', 'Fran\u00E7ais', 'fr-FR'], ['de', 'German', 'Deutsch', 'de-DE'], ['pt', 'Portuguese', 'Portugu\u00EAs', 'pt-BR'],
+  ['it', 'Italian', 'Italiano', 'it-IT'], ['nl', 'Dutch', 'Nederlands', 'nl-NL'], ['ru', 'Russian', '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', 'ru-RU'], ['uk', 'Ukrainian', '\u0423\u043A\u0440\u0430\u0457\u043D\u0441\u044C\u043A\u0430', 'uk-UA'],
+  ['pl', 'Polish', 'Polski', 'pl-PL'], ['cs', 'Czech', '\u010Ce\u0161tina', 'cs-CZ'], ['sk', 'Slovak', 'Sloven\u010Dina', 'sk-SK'], ['hu', 'Hungarian', 'Magyar', 'hu-HU'],
+  ['ro', 'Romanian', 'Rom\u00E2n\u0103', 'ro-RO'], ['bg', 'Bulgarian', '\u0411\u044A\u043B\u0433\u0430\u0440\u0441\u043A\u0438', 'bg-BG'], ['sr', 'Serbian', '\u0421\u0440\u043F\u0441\u043A\u0438', 'sr-RS'],
+  ['hr', 'Croatian', 'Hrvatski', 'hr-HR'], ['sl', 'Slovenian', 'Sloven\u0161\u010Dina', 'sl-SI'], ['bs', 'Bosnian', 'Bosanski', 'bs-BA'], ['mk', 'Macedonian', '\u041C\u0430\u043A\u0435\u0434\u043E\u043D\u0441\u043A\u0438', 'mk-MK'],
+  ['sq', 'Albanian', 'Shqip', 'sq-AL'], ['el', 'Greek', '\u0395\u03BB\u03BB\u03B7\u03BD\u03B9\u03BA\u03AC', 'el-GR'], ['tr', 'Turkish', 'T\u00FCrk\u00E7e', 'tr-TR'], ['ar', 'Arabic', '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', 'ar-SA'],
+  ['he', 'Hebrew', '\u05E2\u05D1\u05E8\u05D9\u05EA', 'he-IL'], ['fa', 'Persian', '\u0641\u0627\u0631\u0633\u06CC', 'fa-IR'], ['ps', 'Pashto', '\u067E\u069A\u062A\u0648', 'ps-AF'], ['ku', 'Kurdish', 'Kurd\u00EE', 'tr-TR'],
+  ['zh', 'Chinese (Simplified)', '\u7B80\u4F53\u4E2D\u6587', 'zh-CN'], ['zh-tw', 'Chinese (Traditional)', '\u7E41\u9AD4\u4E2D\u6587', 'zh-TW'], ['yue', 'Cantonese', '\u5EE3\u6771\u8A71', 'zh-HK'],
+  ['ja', 'Japanese', '\u65E5\u672C\u8A9E', 'ja-JP'], ['ko', 'Korean', '\uD55C\uAD6D\uC5B4', 'ko-KR'], ['th', 'Thai', '\u0E44\u0E17\u0E22', 'th-TH'], ['vi', 'Vietnamese', 'Ti\u1EBFng Vi\u1EC7t', 'vi-VN'],
+  ['id', 'Indonesian', 'Bahasa Indonesia', 'id-ID'], ['ms', 'Malay', 'Bahasa Melayu', 'ms-MY'], ['fil', 'Filipino', 'Filipino', 'fil-PH'], ['my', 'Burmese', '\u1019\u103C\u1014\u103A\u1019\u102C', 'my-MM'],
+  ['km', 'Khmer', '\u1797\u17B6\u179F\u17B6\u1781\u17D2\u1798\u17C2\u179A', 'km-KH'], ['lo', 'Lao', '\u0EA5\u0EB2\u0EA7', 'lo-LA'], ['mn', 'Mongolian', '\u041C\u043E\u043D\u0433\u043E\u043B', 'mn-MN'], ['si', 'Sinhala', '\u0DC3\u0DD2\u0D82\u0DC4\u0DBD', 'si-LK'],
+  ['dv', 'Dhivehi', '\u078B\u07A8\u0788\u07AC\u0780\u07A8', 'en-IN'], ['bo', 'Tibetan', '\u0F56\u0F7C\u0F51\u0F0B\u0F66\u0F90\u0F51\u0F0B', 'zh-CN'], ['ug', 'Uyghur', '\u0626\u06C7\u064A\u063A\u06C7\u0631\u0686\u06D5', 'tr-TR'],
+  ['sw', 'Swahili', 'Kiswahili', 'sw-KE'], ['am', 'Amharic', '\u12A0\u121B\u122D\u129B', 'am-ET'], ['ha', 'Hausa', 'Hausa', 'en-NG'], ['yo', 'Yoruba', 'Yor\u00F9b\u00E1', 'en-NG'], ['ig', 'Igbo', 'Igbo', 'en-NG'],
+  ['zu', 'Zulu', 'isiZulu', 'zu-ZA'], ['xh', 'Xhosa', 'isiXhosa', 'en-ZA'], ['af', 'Afrikaans', 'Afrikaans', 'af-ZA'], ['so', 'Somali', 'Soomaali', 'so-SO'], ['mg', 'Malagasy', 'Malagasy', 'fr-FR'],
+  ['sv', 'Swedish', 'Svenska', 'sv-SE'], ['no', 'Norwegian', 'Norsk', 'nb-NO'], ['da', 'Danish', 'Dansk', 'da-DK'], ['fi', 'Finnish', 'Suomi', 'fi-FI'], ['is', 'Icelandic', '\u00CDslenska', 'is-IS'],
+  ['et', 'Estonian', 'Eesti', 'et-EE'], ['lv', 'Latvian', 'Latvie\u0161u', 'lv-LV'], ['lt', 'Lithuanian', 'Lietuvi\u0173', 'lt-LT'], ['ga', 'Irish', 'Gaeilge', 'en-IE'], ['cy', 'Welsh', 'Cymraeg', 'en-GB'],
+  ['gd', 'Scottish Gaelic', 'G\u00E0idhlig', 'en-GB'], ['eu', 'Basque', 'Euskara', 'es-ES'], ['ca', 'Catalan', 'Catal\u00E0', 'ca-ES'], ['gl', 'Galician', 'Galego', 'es-ES'], ['mt', 'Maltese', 'Malti', 'en-GB'],
+  ['ka', 'Georgian', '\u10E5\u10D0\u10E0\u10D7\u10E3\u10DA\u10D8', 'ka-GE'], ['hy', 'Armenian', '\u0540\u0561\u0575\u0565\u0580\u0565\u0576', 'hy-AM'], ['az', 'Azerbaijani', 'Az\u0259rbaycan', 'az-AZ'],
+  ['kk', 'Kazakh', '\u049A\u0430\u0437\u0430\u049B', 'kk-KZ'], ['uz', 'Uzbek', 'O\u02BBzbek', 'uz-UZ'], ['ky', 'Kyrgyz', '\u041A\u044B\u0440\u0433\u044B\u0437', 'ru-RU'], ['tg', 'Tajik', '\u0422\u043E\u04B7\u0438\u043A\u04E3', 'ru-RU'],
+  ['tk', 'Turkmen', 'T\u00FCrkmen', 'tr-TR'], ['be', 'Belarusian', '\u0411\u0435\u043B\u0430\u0440\u0443\u0441\u043A\u0430\u044F', 'ru-RU'], ['lb', 'Luxembourgish', 'L\u00EBtzebuergesch', 'de-DE'], ['yi', 'Yiddish', '\u05D9\u05D9\u05B4\u05D3\u05D9\u05E9', 'he-IL'],
+  ['la', 'Latin', 'Latina', 'it-IT'], ['eo', 'Esperanto', 'Esperanto', 'en-US'], ['haw', 'Hawaiian', '\u02BB\u014Clelo Hawai\u02BBi', 'en-US'], ['mi', 'M\u0101ori', 'Te Reo M\u0101ori', 'en-NZ'],
+  ['sm', 'Samoan', 'Gagana S\u0101moa', 'en-NZ'], ['ht', 'Haitian Creole', 'Krey\u00F2l ayisyen', 'fr-FR']
+];
+const POPULAR_LANGS = ['en', 'hi', 'hinglish', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'ur', 'es', 'fr', 'de', 'ar', 'zh', 'ja', 'pt', 'ru'];
+function langInfo(code) { return LANGS.filter(function (l) { return l[0] === code; })[0] || null; }
+
+let replyLang = 'auto';     // what Trishul writes in
+let listenLang = 'auto';    // what you speak when dictating
+let voicePrefs = { voice: 'auto', rate: 1, pitch: 1, preset: 'natural' };
+try {
+  const a = localStorage.getItem('trishul_replylang'); if (a && (a === 'auto' || langInfo(a))) replyLang = a;
+  const b = localStorage.getItem('trishul_listenlang'); if (b && (b === 'auto' || langInfo(b))) listenLang = b;
+  const c = JSON.parse(localStorage.getItem('trishul_voiceprefs') || 'null'); if (c && typeof c === 'object') voicePrefs = Object.assign(voicePrefs, c);
+} catch (e) {}
+
+function languageBlock() {
+  if (replyLang !== 'auto') {
+    const L = langInfo(replyLang);
+    if (L) {
+      const extra = replyLang === 'hinglish' ? ' Write Hindi using English (Latin) letters, the way people text, mixing in common English words naturally.' : '';
+      return '\n\nLanguage: the person has asked you to reply in ' + L[1] + ' (' + L[2] + ') for every reply, unless they ask for another language. Keep code, names and quoted text unchanged.' + extra;
+    }
+  }
+  return '\n\nLanguage: reply in the same language and script the person writes in. If they mix languages (for example Hinglish), mirror their mix. If they ask you to switch language, switch. Keep code, names and quoted text unchanged. If you are less sure of a language\u2019s nuance or idiom, say so briefly instead of bluffing.';
 }
-window.speechSynthesis.onvoiceschanged = function () { window.speechSynthesis.getVoices(); };
+function languageNote() {
+  if (replyLang !== 'auto' && langInfo(replyLang)) return '\nWrite all text in ' + langInfo(replyLang)[1] + '.';
+  return '\nWrite in the language of the request.';
+}
+
+/* which language is this text? (used to choose the speaking voice) */
+function detectSpeechLang(text) {
+  if (replyLang !== 'auto' && langInfo(replyLang)) return langInfo(replyLang)[3];
+  const t = String(text || '').slice(0, 500);
+  const has = function (re) { return re.test(t); };
+  if (has(/[\u3040-\u30FF]/)) return 'ja-JP';
+  if (has(/[\uAC00-\uD7AF]/)) return 'ko-KR';
+  if (has(/[\u4E00-\u9FFF]/)) return 'zh-CN';
+  if (has(/[\u0900-\u097F]/)) return 'hi-IN';
+  if (has(/[\u0980-\u09FF]/)) return 'bn-IN';
+  if (has(/[\u0B80-\u0BFF]/)) return 'ta-IN';
+  if (has(/[\u0C00-\u0C7F]/)) return 'te-IN';
+  if (has(/[\u0C80-\u0CFF]/)) return 'kn-IN';
+  if (has(/[\u0D00-\u0D7F]/)) return 'ml-IN';
+  if (has(/[\u0A80-\u0AFF]/)) return 'gu-IN';
+  if (has(/[\u0A00-\u0A7F]/)) return 'pa-IN';
+  if (has(/[\u0B00-\u0B7F]/)) return 'or-IN';
+  if (has(/[\u0D80-\u0DFF]/)) return 'si-LK';
+  if (has(/[\u0E00-\u0E7F]/)) return 'th-TH';
+  if (has(/[\u1780-\u17FF]/)) return 'km-KH';
+  if (has(/[\u1000-\u109F]/)) return 'my-MM';
+  if (has(/[\u10A0-\u10FF]/)) return 'ka-GE';
+  if (has(/[\u0530-\u058F]/)) return 'hy-AM';
+  if (has(/[\u0590-\u05FF]/)) return 'he-IL';
+  if (has(/[\u0600-\u06FF]/)) return has(/[\u0679\u0688\u0691\u06BA\u06D2\u06C1\u06BE]/) ? 'ur-PK' : 'ar-SA';
+  if (has(/[\u0370-\u03FF]/)) return 'el-GR';
+  if (has(/[\u0400-\u04FF]/)) return has(/[\u0457\u0454\u0456\u0491]/) ? 'uk-UA' : 'ru-RU';
+  const score = function (re) { return (t.match(re) || []).length; };
+  const cand = [
+    ['es-ES', score(/\b(el|la|los|las|que|y|en|un|una|por|con|para|es|del|pero|como)\b/gi) + score(/[\u00F1\u00BF\u00A1]/g) * 3],
+    ['fr-FR', score(/\b(le|la|les|des|est|et|une|un|pour|avec|dans|que|qui|pas|vous|nous)\b/gi) + score(/[\u00E0\u00E2\u00E7\u00E8\u00E9\u00EA\u00EB\u00EE\u00EF\u00F4\u00F9\u00FB]/g)],
+    ['de-DE', score(/\b(der|die|das|und|ist|nicht|ein|eine|mit|f\u00FCr|auf|ich|sie|wir)\b/gi) + score(/[\u00E4\u00F6\u00FC\u00DF]/g) * 2],
+    ['pt-BR', score(/\b(que|n\u00E3o|uma|para|com|os|as|\u00E9|voc\u00EA|mais|como)\b/gi) + score(/[\u00E3\u00F5\u00E7]/g) * 2],
+    ['it-IT', score(/\b(il|lo|gli|che|non|una|per|con|sono|\u00E8|come|della)\b/gi)],
+    ['id-ID', score(/\b(yang|dan|di|ini|itu|dengan|untuk|tidak|saya|anda|akan)\b/gi)],
+    ['tr-TR', score(/\b(ve|bir|bu|i\u00E7in|ile|de|da|ben|sen|de\u011Fil)\b/gi) + score(/[\u011F\u0131\u015F]/g) * 2],
+    ['nl-NL', score(/\b(de|het|een|en|van|is|niet|dat|ik|je|met)\b/gi)],
+    ['vi-VN', score(/[\u0103\u00E2\u00EA\u00F4\u01A1\u01B0\u0111\u1EA1\u1EA3\u1EAD\u1EB7\u1EBF\u1EC7\u1ECB\u1ECD\u1ED9\u1EE3\u1EE5\u1EF1]/g) * 2],
+    ['pl-PL', score(/\b(nie|jest|to|si\u0119|na|\u017Ce|jak|czy)\b/gi) + score(/[\u0105\u0107\u0119\u0142\u0144\u015B\u017A\u017C]/g) * 2]
+  ].sort(function (a, b) { return b[1] - a[1]; });
+  if (cand[0][1] >= 4) return cand[0][0];
+  return (navigator.language && /^en/i.test(navigator.language)) ? navigator.language : 'en-US';
+}
+function listenLangCode() {
+  if (listenLang !== 'auto' && langInfo(listenLang)) return langInfo(listenLang)[3];
+  if (replyLang !== 'auto' && langInfo(replyLang)) return langInfo(replyLang)[3];
+  return navigator.language || 'en-US';
+}
+
+function allVoices() { try { return window.speechSynthesis.getVoices() || []; } catch (e) { return []; } }
+function normLang(l) { return String(l || '').toLowerCase().replace('_', '-'); }
+function pickVoice(lang) {
+  const vs = allVoices();
+  if (!vs.length) return null;
+  const want = normLang(lang), base = want.split('-')[0];
+  if (voicePrefs.voice && voicePrefs.voice !== 'auto') {
+    const v = vs.filter(function (x) { return x.voiceURI === voicePrefs.voice || x.name === voicePrefs.voice; })[0];
+    if (v && normLang(v.lang).split('-')[0] === base) return v;   // the chosen voice, when it speaks this language
+  }
+  const quality = function (v) { return (/google|natural|online|neural/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1); };
+  let pool = vs.filter(function (v) { return normLang(v.lang) === want; });
+  if (!pool.length) pool = vs.filter(function (v) { return normLang(v.lang).split('-')[0] === base; });
+  if (!pool.length) return null;
+  return pool.slice().sort(function (a, b) { return quality(b) - quality(a); })[0];
+}
+const VOICE_PRESETS = {
+  natural: ['Natural', 1, 1], calm: ['Calm', 0.9, 0.92], energetic: ['Energetic', 1.12, 1.08], deep: ['Deep', 0.95, 0.7],
+  bright: ['Bright', 1.05, 1.3], storyteller: ['Storyteller', 0.88, 1.0], quick: ['Quick', 1.35, 1.0]
+};
+const VOICE_SAMPLES = {
+  en: 'Hello, I am Trishul. How can I help you today?', hi: '\u0928\u092E\u0938\u094D\u0924\u0947, \u092E\u0948\u0902 \u0924\u094D\u0930\u093F\u0936\u0942\u0932 \u0939\u0942\u0901\u0964 \u092E\u0948\u0902 \u0906\u092A\u0915\u0940 \u0915\u0948\u0938\u0947 \u092E\u0926\u0926 \u0915\u0930 \u0938\u0915\u0924\u093E \u0939\u0942\u0901?',
+  bn: '\u09A8\u09AE\u09B8\u09CD\u0995\u09BE\u09B0, \u0986\u09AE\u09BF \u09A4\u09CD\u09B0\u09BF\u09B6\u09C2\u09B2\u0964 \u0986\u09AE\u09BF \u0995\u09C0\u09AD\u09BE\u09AC\u09C7 \u09B8\u09BE\u09B9\u09BE\u09AF\u09CD\u09AF \u0995\u09B0\u09A4\u09C7 \u09AA\u09BE\u09B0\u09BF?', ta: '\u0BB5\u0BA3\u0B95\u0BCD\u0B95\u0BAE\u0BCD, \u0BA8\u0BBE\u0BA9\u0BCD \u0BA4\u0BBF\u0BB0\u0BBF\u0B9A\u0BC2\u0BB2\u0BCD. \u0BA8\u0BBE\u0BA9\u0BCD \u0B8E\u0BAA\u0BCD\u0BAA\u0B9F\u0BBF \u0B89\u0BA4\u0BB5\u0BB2\u0BBE\u0BAE\u0BCD?',
+  te: '\u0C28\u0C2E\u0C38\u0C4D\u0C15\u0C3E\u0C30\u0C02, \u0C28\u0C47\u0C28\u0C41 \u0C24\u0C4D\u0C30\u0C3F\u0C36\u0C42\u0C32\u0C4D. \u0C28\u0C47\u0C28\u0C41 \u0C0E\u0C32\u0C3E \u0C38\u0C39\u0C3E\u0C2F\u0C02 \u0C1A\u0C47\u0C2F\u0C17\u0C32\u0C28\u0C41?', mr: '\u0928\u092E\u0938\u094D\u0915\u093E\u0930, \u092E\u0940 \u0924\u094D\u0930\u093F\u0936\u0942\u0932 \u0906\u0939\u0947. \u092E\u0940 \u0924\u0941\u092E\u094D\u0939\u093E\u0932\u093E \u0915\u0936\u0940 \u092E\u0926\u0924 \u0915\u0930\u0942?',
+  gu: '\u0AA8\u0AAE\u0AB8\u0ACD\u0AA4\u0AC7, \u0AB9\u0AC1\u0A82 \u0AA4\u0ACD\u0AB0\u0ABF\u0AB6\u0AC2\u0AB2 \u0A9B\u0AC1\u0A82. \u0AB9\u0AC1\u0A82 \u0A95\u0AC7\u0AB5\u0AC0 \u0AB0\u0AC0\u0AA4\u0AC7 \u0AAE\u0AA6\u0AA6 \u0A95\u0AB0\u0AC0 \u0AB6\u0A95\u0AC1\u0A82?',
+  es: 'Hola, soy Trishul. \u00BFEn qu\u00E9 puedo ayudarte?', fr: 'Bonjour, je suis Trishul. Comment puis-je vous aider ?', de: 'Hallo, ich bin Trishul. Wie kann ich helfen?', pt: 'Ol\u00E1, eu sou o Trishul. Como posso ajudar?',
+  it: 'Ciao, sono Trishul. Come posso aiutarti?', ru: '\u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435, \u044F \u0422\u0440\u0438\u0448\u0443\u043B. \u0427\u0435\u043C \u043C\u043E\u0433\u0443 \u043F\u043E\u043C\u043E\u0447\u044C?',
+  ar: '\u0645\u0631\u062D\u0628\u0627\u064B\u060C \u0623\u0646\u0627 \u062A\u0631\u0634\u0648\u0644. \u0643\u064A\u0641 \u064A\u0645\u0643\u0646\u0646\u064A \u0645\u0633\u0627\u0639\u062F\u062A\u0643\u061F', zh: '\u4F60\u597D\uFF0C\u6211\u662FTrishul\u3002\u6211\u80FD\u5E2E\u4F60\u4EC0\u4E48\uFF1F',
+  ja: '\u3053\u3093\u306B\u3061\u306F\u3001\u30C8\u30EA\u30B7\u30E5\u30EB\u3067\u3059\u3002\u4F55\u304B\u304A\u624B\u4F1D\u3044\u3067\u304D\u307E\u3059\u304B\uFF1F', ko: '\uC548\uB155\uD558\uC138\uC694, \uC800\uB294 \uD2B8\uB9AC\uC290\uC785\uB2C8\uB2E4. \uBB34\uC5C7\uC744 \uB3C4\uC640\uB4DC\uB9B4\uAE4C\uC694?',
+  tr: 'Merhaba, ben Trishul. Size nas\u0131l yard\u0131mc\u0131 olabilirim?', id: 'Halo, saya Trishul. Apa yang bisa saya bantu?', vi: 'Xin ch\u00E0o, t\u00F4i l\u00E0 Trishul. T\u00F4i c\u00F3 th\u1EC3 gi\u00FAp g\u00EC?',
+  th: '\u0E2A\u0E27\u0E31\u0E2A\u0E14\u0E35 \u0E09\u0E31\u0E19\u0E04\u0E37\u0E2D\u0E15\u0E23\u0E35\u0E28\u0E39\u0E25 \u0E21\u0E35\u0E2D\u0E30\u0E44\u0E23\u0E43\u0E2B\u0E49\u0E0A\u0E48\u0E27\u0E22\u0E44\u0E2B\u0E21', nl: 'Hallo, ik ben Trishul. Waarmee kan ik helpen?', pl: 'Cze\u015B\u0107, jestem Trishul. W czym mog\u0119 pomóc?'
+};
 
 let keepAliveTimer = null;
-function speak(text) {
-  if (!voiceOn || !text) return;
+function speak(text, opts) {
+  if ((!voiceOn && !(opts && opts.force)) || !text) return;
   window.speechSynthesis.cancel();
   const chunks = chunkText(text);
   if (!chunks.length) return;
@@ -906,9 +1124,14 @@ function speak(text) {
       clearInterval(keepAliveTimer);
       return;
     }
-    const u = new SpeechSynthesisUtterance(chunks[i++]);
-    u.rate = 1.0; u.pitch = 1.0;
-    const v = pickVoice(); if (v) u.voice = v;
+    const piece = chunks[i++];
+    const lang = detectSpeechLang(piece);
+    const u = new SpeechSynthesisUtterance(piece);
+    u.lang = lang;
+    u.rate = Number(voicePrefs.rate) || 1;
+    u.pitch = Number(voicePrefs.pitch) || 1;
+    const v = pickVoice(lang);
+    if (v) { try { u.voice = v; } catch (e) {} }
     u.onend = next;
     u.onerror = next;
     window.speechSynthesis.speak(u);
@@ -923,6 +1146,362 @@ function speak(text) {
   next();
 }
 
+function saveLangVoice() {
+  try {
+    localStorage.setItem('trishul_replylang', replyLang);
+    localStorage.setItem('trishul_listenlang', listenLang);
+    localStorage.setItem('trishul_voiceprefs', JSON.stringify(voicePrefs));
+  } catch (e) {}
+}
+function langOptionsHtml(selected, autoLabel) {
+  const opt = function (l) { return '<option value="' + l[0] + '"' + (l[0] === selected ? ' selected' : '') + '>' + l[1] + (l[2] !== l[1] ? ' \u00b7 ' + l[2] : '') + '</option>'; };
+  const popular = POPULAR_LANGS.map(langInfo).filter(Boolean);
+  const rest = LANGS.filter(function (l) { return POPULAR_LANGS.indexOf(l[0]) === -1; }).sort(function (a, b) { return a[1].localeCompare(b[1]); });
+  return '<option value="auto"' + (selected === 'auto' ? ' selected' : '') + '>' + autoLabel + '</option>'
+    + '<optgroup label="Popular">' + popular.map(opt).join('') + '</optgroup>'
+    + '<optgroup label="All languages">' + rest.map(opt).join('') + '</optgroup>';
+}
+function voiceOptionsHtml() {
+  const vs = allVoices();
+  const names = (typeof Intl !== 'undefined' && Intl.DisplayNames) ? new Intl.DisplayNames(['en'], { type: 'language' }) : null;
+  const groups = {};
+  vs.forEach(function (v) {
+    let g = v.lang;
+    try { if (names) g = names.of(v.lang.replace('_', '-')) || v.lang; } catch (e) {}
+    (groups[g] = groups[g] || []).push(v);
+  });
+  let h = '<option value="auto"' + (voicePrefs.voice === 'auto' ? ' selected' : '') + '>Automatic (best voice for each language)</option>';
+  Object.keys(groups).sort().forEach(function (g) {
+    h += '<optgroup label="' + g + '">' + groups[g].map(function (v) {
+      const id = v.voiceURI || v.name;
+      return '<option value="' + deckEsc(id) + '"' + (id === voicePrefs.voice ? ' selected' : '') + '>' + deckEsc(v.name) + '</option>';
+    }).join('') + '</optgroup>';
+  });
+  return h;
+}
+function renderVoicePanel() {
+  const $ = function (id) { return document.getElementById(id); };
+  $('replyLangSel').innerHTML = langOptionsHtml(replyLang, 'Automatic (the language I write in)');
+  $('listenLangSel').innerHTML = langOptionsHtml(listenLang, 'Automatic (follows reply language or browser)');
+  $('voiceSel').innerHTML = voiceOptionsHtml();
+  $('rateRange').value = voicePrefs.rate;
+  $('pitchRange').value = voicePrefs.pitch;
+  $('rateVal').textContent = Number(voicePrefs.rate).toFixed(2) + '\u00d7';
+  $('pitchVal').textContent = Number(voicePrefs.pitch).toFixed(2);
+  Array.prototype.forEach.call(document.querySelectorAll('#presetRow .chip'), function (b) { b.classList.toggle('on', b.dataset.preset === voicePrefs.preset); });
+  $('voiceOnBox').checked = voiceOn;
+  $('voiceCount').textContent = allVoices().length ? allVoices().length + ' voices on this device' : 'No voices found yet. Your browser may still be loading them.';
+}
+function previewVoice() {
+  let lang = 'en';
+  if (voicePrefs.voice && voicePrefs.voice !== 'auto') {
+    const v = allVoices().filter(function (x) { return x.voiceURI === voicePrefs.voice || x.name === voicePrefs.voice; })[0];
+    if (v) lang = normLang(v.lang).split('-')[0];
+  } else if (replyLang !== 'auto' && langInfo(replyLang)) lang = langInfo(replyLang)[3].split('-')[0];
+  speak(VOICE_SAMPLES[lang] || VOICE_SAMPLES.en, { force: true });
+}
+function openVoicePanel() {
+  closeMenu();
+  renderVoicePanel();
+  document.getElementById('voicePanel').hidden = false;
+  document.getElementById('overlay').classList.add('on');
+}
+function closeVoicePanel() {
+  document.getElementById('voicePanel').hidden = true;
+  document.getElementById('overlay').classList.remove('on');
+  try { window.speechSynthesis.cancel(); } catch (e) {}
+}
+function initVoicePanel() {
+  const $ = function (id) { return document.getElementById(id); };
+  $('replyLangSel').addEventListener('change', function () { replyLang = this.value; saveLangVoice(); });
+  $('listenLangSel').addEventListener('change', function () { listenLang = this.value; saveLangVoice(); });
+  $('voiceSel').addEventListener('change', function () { voicePrefs.voice = this.value; saveLangVoice(); });
+  $('rateRange').addEventListener('input', function () { voicePrefs.rate = Number(this.value); voicePrefs.preset = 'custom'; $('rateVal').textContent = voicePrefs.rate.toFixed(2) + '\u00d7'; saveLangVoice(); renderPresetState(); });
+  $('pitchRange').addEventListener('input', function () { voicePrefs.pitch = Number(this.value); voicePrefs.preset = 'custom'; $('pitchVal').textContent = voicePrefs.pitch.toFixed(2); saveLangVoice(); renderPresetState(); });
+  const row = $('presetRow');
+  Object.keys(VOICE_PRESETS).forEach(function (k) {
+    const p = VOICE_PRESETS[k];
+    const b = el('button', 'chip', p[0]);
+    b.dataset.preset = k;
+    b.addEventListener('click', function () {
+      voicePrefs.rate = p[1]; voicePrefs.pitch = p[2]; voicePrefs.preset = k; saveLangVoice(); renderVoicePanel();
+    });
+    row.appendChild(b);
+  });
+  function renderPresetState() { Array.prototype.forEach.call(document.querySelectorAll('#presetRow .chip'), function (b) { b.classList.toggle('on', b.dataset.preset === voicePrefs.preset); }); }
+  $('voicePreview').addEventListener('click', previewVoice);
+  $('voiceOnBox').addEventListener('change', function () { voiceOn = this.checked; try { localStorage.setItem('chaturvedi_voice', voiceOn ? '1' : '0'); } catch (e) {} updateMenuLabels(); });
+  $('voiceClose').addEventListener('click', closeVoicePanel);
+  $('voiceItem2').addEventListener('click', openVoicePanel);
+  window.speechSynthesis.onvoiceschanged = function () { if (!$('voicePanel').hidden) { $('voiceSel').innerHTML = voiceOptionsHtml(); $('voiceCount').textContent = allVoices().length + ' voices on this device'; } };
+}
+
+/* ══════════════════════════════════════════════════════════
+   BACKDROP — graphics behind everything, not just a colour:
+   built-in animated scenes, your own uploaded picture, or one
+   Trishul paints for you. Dim, blur and frosted messages keep
+   text easy to read.
+   ══════════════════════════════════════════════════════════ */
+const BG_BUILTIN = [
+  ['none', 'Plain'], ['aurora', 'Aurora'], ['mesh', 'Mesh'], ['stars', 'Starfield'], ['waves', 'Waves'], ['rain', 'Rain'],
+  ['bokeh', 'Bokeh'], ['grid', 'Grid'], ['trident', 'Trident'], ['hills', 'Hills'], ['grain', 'Paper']
+];
+const BG_CANVAS = { stars: 1, waves: 1, rain: 1, bokeh: 1 };
+let bgCfg = { type: 'none', id: '', dim: 0, blur: 0, frost: true, touched: false };
+let bgList = [];
+let bgRaf = 0, bgStopFn = null;
+try { const s = JSON.parse(localStorage.getItem('trishul_bg') || 'null'); if (s && typeof s === 'object') bgCfg = Object.assign(bgCfg, s); } catch (e) {}
+
+function cssRgb(color) {
+  const d = document.createElement('div');
+  d.style.color = color;
+  document.body.appendChild(d);
+  const m = (getComputedStyle(d).color.match(/[\d.]+/g) || [115, 118, 232]).map(Number);
+  d.remove();
+  return { r: m[0], g: m[1], b: m[2] };
+}
+function themeColors() {
+  const cs = getComputedStyle(document.documentElement);
+  const acc = cssRgb(cs.getPropertyValue('--accent').trim() || '#7376e8');
+  const bg = cssRgb(cs.getPropertyValue('--bg').trim() || '#0f1220');
+  const light = (0.299 * bg.r + 0.587 * bg.g + 0.114 * bg.b) > 150;
+  return { acc: acc, bg: bg, light: light };
+}
+function saveBg() { try { localStorage.setItem('trishul_bg', JSON.stringify(bgCfg)); } catch (e) {} }
+async function loadBgList() { try { bgList = (await imgDbGet('bg:list')) || []; if (!Array.isArray(bgList)) bgList = []; } catch (e) { bgList = []; } }
+function saveBgList() { imgDbPut('bg:list', bgList); }
+
+function stopBgAnim() { if (bgRaf) cancelAnimationFrame(bgRaf); bgRaf = 0; if (bgStopFn) { bgStopFn(); bgStopFn = null; } }
+function svgUri(svg) { return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")'; }
+
+function startBgCanvas(kind, tc) {
+  const cv = document.querySelector('#bgLayer .bg-canvas');
+  const ctx = cv.getContext('2d');
+  if (!ctx) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  let W = 0, H = 0;
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+  const A = function (a) { return 'rgba(' + tc.acc.r + ',' + tc.acc.g + ',' + tc.acc.b + ',' + a + ')'; };
+  const ink = tc.light ? '50,60,100' : '210,220,255';
+  const R = Math.random;
+  let items = [], shooting = null, nextShoot = 3000;
+  if (kind === 'stars') for (let i = 0; i < 170; i++) items.push({ x: R() * W, y: R() * H, r: 0.4 + R() * 1.2, ph: R() * 6.28, sp: 0.6 + R() * 1.8 });
+  if (kind === 'rain') for (let i = 0; i < 150; i++) items.push({ x: R() * W, y: R() * H, len: 12 + R() * 26, sp: 5 + R() * 9, a: 0.12 + R() * 0.28 });
+  if (kind === 'bokeh') for (let i = 0; i < 18; i++) items.push({ x: R() * W, y: R() * H, r: 22 + R() * 80, vx: (R() - 0.5) * 0.22, vy: (R() - 0.5) * 0.16, a: 0.08 + R() * 0.14, hue: R() });
+  const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let last = 0;
+  function frame(t) {
+    bgRaf = requestAnimationFrame(frame);
+    if (document.hidden || t - last < 33) return;
+    last = t;
+    ctx.clearRect(0, 0, W, H);
+    const s = t / 1000;
+    if (kind === 'stars') {
+      items.forEach(function (st) {
+        const a = 0.3 + 0.55 * (0.5 + 0.5 * Math.sin(s * st.sp + st.ph));
+        ctx.fillStyle = 'rgba(' + ink + ',' + a.toFixed(3) + ')';
+        ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, 6.283); ctx.fill();
+      });
+      nextShoot -= 33;
+      if (!shooting && nextShoot < 0) { shooting = { x: R() * W * 0.7, y: R() * H * 0.4, vx: 9, vy: 4.5, life: 1 }; nextShoot = 5000 + R() * 7000; }
+      if (shooting) {
+        const g = ctx.createLinearGradient(shooting.x, shooting.y, shooting.x - shooting.vx * 9, shooting.y - shooting.vy * 9);
+        g.addColorStop(0, 'rgba(' + ink + ',' + (0.9 * shooting.life) + ')'); g.addColorStop(1, 'rgba(' + ink + ',0)');
+        ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(shooting.x, shooting.y); ctx.lineTo(shooting.x - shooting.vx * 9, shooting.y - shooting.vy * 9); ctx.stroke();
+        shooting.x += shooting.vx; shooting.y += shooting.vy; shooting.life -= 0.018;
+        if (shooting.life <= 0) shooting = null;
+      }
+    } else if (kind === 'waves') {
+      for (let k = 0; k < 4; k++) {
+        const base = H * (0.6 + k * 0.1), amp = 16 + k * 9, f = 0.004 - k * 0.0004, sp = 0.5 + k * 0.22;
+        ctx.beginPath(); ctx.moveTo(0, H);
+        for (let x = 0; x <= W; x += 10) ctx.lineTo(x, base + Math.sin(x * f + s * sp + k) * amp + Math.sin(x * f * 2.3 - s * sp * 0.7) * amp * 0.4);
+        ctx.lineTo(W, H); ctx.closePath();
+        const g = ctx.createLinearGradient(0, base - amp, 0, H);
+        g.addColorStop(0, A(0.22 - k * 0.035)); g.addColorStop(1, A(0.02));
+        ctx.fillStyle = g; ctx.fill();
+      }
+    } else if (kind === 'rain') {
+      ctx.lineWidth = 1;
+      items.forEach(function (d) {
+        ctx.strokeStyle = 'rgba(' + (tc.light ? '70,90,150' : '170,190,255') + ',' + d.a + ')';
+        ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - d.len * 0.18, d.y + d.len); ctx.stroke();
+        d.y += d.sp; d.x -= d.sp * 0.18;
+        if (d.y > H + 20) { d.y = -30; d.x = R() * (W + 100); }
+      });
+    } else if (kind === 'bokeh') {
+      items.forEach(function (b) {
+        const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        const col = b.hue < 0.5 ? A(b.a) : 'rgba(' + ink + ',' + (b.a * 0.7) + ')';
+        g.addColorStop(0, col); g.addColorStop(0.7, col.replace(/[\d.]+\)$/, '0.03)')); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.fill();
+        b.x += b.vx; b.y += b.vy;
+        if (b.x < -b.r) b.x = W + b.r; if (b.x > W + b.r) b.x = -b.r; if (b.y < -b.r) b.y = H + b.r; if (b.y > H + b.r) b.y = -b.r;
+      });
+    }
+    if (still) { cancelAnimationFrame(bgRaf); bgRaf = 0; }
+  }
+  window.addEventListener('resize', resize);
+  bgStopFn = function () { window.removeEventListener('resize', resize); ctx.clearRect(0, 0, W, H); };
+  bgRaf = requestAnimationFrame(frame);
+}
+
+function applyBackdrop() {
+  const layer = document.getElementById('bgLayer');
+  if (!layer) return;
+  stopBgAnim();
+  const art = layer.querySelector('.bg-art'), cv = layer.querySelector('.bg-canvas'), img = layer.querySelector('.bg-img'), dim = layer.querySelector('.bg-dim');
+  const tc = themeColors();
+  document.documentElement.style.setProperty('--acc', tc.acc.r + ',' + tc.acc.g + ',' + tc.acc.b);
+  document.documentElement.style.setProperty('--bgrgb', tc.bg.r + ',' + tc.bg.g + ',' + tc.bg.b);
+  art.className = 'bg-art'; art.style.backgroundImage = ''; art.style.background = '';
+  cv.style.display = 'none'; img.style.backgroundImage = ''; img.style.filter = ''; img.style.display = 'none';
+  const type = bgCfg.type;
+  document.body.dataset.bg = type === 'none' ? 'none' : 'on';
+  document.body.dataset.frost = bgCfg.frost ? 'on' : 'off';
+  dim.style.opacity = type === 'none' ? 0 : (bgCfg.dim / 100);
+
+  if (type === 'img') {
+    const it = bgList.filter(function (x) { return x.id === bgCfg.id; })[0];
+    if (it) { img.style.display = 'block'; img.style.backgroundImage = 'url("' + it.d + '")'; img.style.filter = 'blur(' + bgCfg.blur + 'px)'; }
+    else { document.body.dataset.bg = 'none'; dim.style.opacity = 0; }
+  } else if (BG_CANVAS[type]) {
+    cv.style.display = 'block';
+    startBgCanvas(type, tc);
+  } else if (type === 'trident') {
+    const c = 'rgb(' + tc.acc.r + ',' + tc.acc.g + ',' + tc.acc.b + ')';
+    art.style.backgroundImage = svgUri('<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"><g fill="none" stroke="' + c + '" stroke-opacity=".16" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform="translate(70 70) rotate(-18) scale(.55) translate(-60 -75)"><path d="M60 74V144"/><path d="M60 74V24"/><path d="M60 6L69 28H51Z"/><path d="M60 74C34 70 26 58 26 44V28"/><path d="M26 10L35 32H17Z"/><path d="M60 74C86 70 94 58 94 44V28"/><path d="M94 10L103 32H85Z"/></g></svg>');
+    art.style.backgroundSize = '140px 140px';
+  } else if (type === 'hills') {
+    const a = tc.acc, mix = function (k) { return 'rgb(' + Math.round(a.r * k + tc.bg.r * (1 - k)) + ',' + Math.round(a.g * k + tc.bg.g * (1 - k)) + ',' + Math.round(a.b * k + tc.bg.b * (1 - k)) + ')'; };
+    art.style.backgroundImage = svgUri('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + mix(0.0) + '"/><stop offset=".7" stop-color="' + mix(0.38) + '"/></linearGradient></defs><rect width="1600" height="900" fill="url(#s)"/><circle cx="1180" cy="520" r="90" fill="' + mix(0.8) + '" opacity=".55"/><path d="M0 640C260 560 460 700 760 620S1260 540 1600 640V900H0Z" fill="' + mix(0.22) + '"/><path d="M0 730C300 660 520 800 860 720S1330 660 1600 740V900H0Z" fill="' + mix(0.12) + '"/><path d="M0 820C320 770 620 880 980 820S1380 780 1600 830V900H0Z" fill="' + mix(0.05) + '"/></svg>');
+    art.style.backgroundSize = 'cover'; art.style.backgroundPosition = 'bottom center';
+  } else if (type === 'grain') {
+    art.style.backgroundColor = 'rgba(' + tc.acc.r + ',' + tc.acc.g + ',' + tc.acc.b + ',.05)';
+    art.style.backgroundImage = svgUri('<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 .55 0"/></filter><rect width="100%" height="100%" filter="url(#n)" opacity=".5"/></svg>');
+  } else if (type === 'aurora' || type === 'mesh' || type === 'grid') {
+    art.className = 'bg-art bg-' + type;
+  }
+  document.getElementById('bgLayer').dataset.type = type;
+}
+function setBackdrop(type, id) {
+  bgCfg.type = type; bgCfg.id = id || '';
+  if (!bgCfg.touched) bgCfg.dim = type === 'img' ? 45 : (type === 'none' ? 0 : 8);
+  saveBg(); applyBackdrop(); renderBackdropPanel();
+}
+function fileToDataUrl(file, max, q) {
+  return new Promise(function (resolve) {
+    const fr = new FileReader();
+    fr.onload = function () {
+      const im = new Image();
+      im.onload = function () {
+        const sc = Math.min(1, max / Math.max(im.width, im.height));
+        const w = Math.max(1, Math.round(im.width * sc)), h = Math.max(1, Math.round(im.height * sc));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const x = c.getContext('2d'); x.drawImage(im, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', q));
+      };
+      im.onerror = function () { resolve(null); };
+      im.src = fr.result;
+    };
+    fr.onerror = function () { resolve(null); };
+    fr.readAsDataURL(file);
+  });
+}
+async function addBackdropImage(dataUrl, name) {
+  const id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  bgList.unshift({ id: id, name: name || 'My backdrop', d: dataUrl });
+  bgList = bgList.slice(0, 8);
+  saveBgList();
+  setBackdrop('img', id);
+}
+function renderBackdropPanel() {
+  const grid = document.getElementById('bdGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  BG_BUILTIN.forEach(function (b) {
+    const t = el('button', 'bd-tile bd-prev-' + b[0] + (bgCfg.type === b[0] ? ' on' : ''), '<span>' + b[1] + '</span>');
+    t.setAttribute('aria-label', b[1]);
+    t.addEventListener('click', function () { setBackdrop(b[0]); });
+    grid.appendChild(t);
+  });
+  bgList.forEach(function (it) {
+    const t = el('button', 'bd-tile bd-photo' + (bgCfg.type === 'img' && bgCfg.id === it.id ? ' on' : ''), '<span>' + deckEsc(it.name) + '</span>');
+    t.style.backgroundImage = 'url("' + it.d + '")';
+    const x = el('i', 'bd-x', '\u00d7');
+    x.setAttribute('aria-label', 'Delete this backdrop');
+    x.addEventListener('click', function (e) {
+      e.stopPropagation();
+      bgList = bgList.filter(function (y) { return y.id !== it.id; });
+      saveBgList();
+      if (bgCfg.type === 'img' && bgCfg.id === it.id) setBackdrop('none'); else renderBackdropPanel();
+    });
+    t.appendChild(x);
+    t.addEventListener('click', function () { setBackdrop('img', it.id); });
+    grid.appendChild(t);
+  });
+  document.getElementById('dimRange').value = bgCfg.dim;
+  document.getElementById('dimVal').textContent = bgCfg.dim + '%';
+  document.getElementById('blurRange').value = bgCfg.blur;
+  document.getElementById('blurVal').textContent = bgCfg.blur + ' px';
+  document.getElementById('blurRange').disabled = bgCfg.type !== 'img';
+  document.getElementById('frostBox').checked = !!bgCfg.frost;
+}
+function openBackdropPanel() {
+  closeMenu();
+  renderBackdropPanel();
+  document.getElementById('backdropPanel').hidden = false;
+  document.getElementById('overlay').classList.add('on');
+}
+function closeBackdropPanel() {
+  document.getElementById('backdropPanel').hidden = true;
+  document.getElementById('overlay').classList.remove('on');
+}
+async function initBackdrop() {
+  const layer = el('div', '', '<div class="bg-art"></div><canvas class="bg-canvas"></canvas><div class="bg-img"></div><div class="bg-dim"></div>');
+  layer.id = 'bgLayer';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.insertBefore(layer, document.body.firstChild);
+  await loadBgList();
+  applyBackdrop();
+  const $ = function (id) { return document.getElementById(id); };
+  $('backdropItem').addEventListener('click', openBackdropPanel);
+  $('backdropClose').addEventListener('click', closeBackdropPanel);
+  $('dimRange').addEventListener('input', function () { bgCfg.dim = Number(this.value); bgCfg.touched = true; $('dimVal').textContent = bgCfg.dim + '%'; saveBg(); applyBackdrop(); });
+  $('blurRange').addEventListener('input', function () { bgCfg.blur = Number(this.value); $('blurVal').textContent = bgCfg.blur + ' px'; saveBg(); applyBackdrop(); });
+  $('frostBox').addEventListener('change', function () { bgCfg.frost = this.checked; saveBg(); applyBackdrop(); });
+  $('bdFile').addEventListener('change', async function () {
+    const f = this.files && this.files[0];
+    this.value = '';
+    if (!f || f.size > 14 * 1024 * 1024) return;
+    const d = await fileToDataUrl(f, 1920, 0.85);
+    if (d) addBackdropImage(d, f.name.replace(/\.[^.]+$/, '').slice(0, 24));
+  });
+  $('bdUpload').addEventListener('click', function () { $('bdFile').click(); });
+  $('bdAi').addEventListener('click', async function () {
+    const btn = this, inp = $('bdPrompt'), msg = $('bdMsg');
+    const p = inp.value.trim();
+    if (!p) { inp.focus(); return; }
+    btn.disabled = true; btn.textContent = 'Painting\u2026'; msg.textContent = '';
+    try {
+      const r = await generateImage(p + ', desktop wallpaper, soft atmospheric, wide composition, no text, no people', { w: 1024, h: 576 });
+      await addBackdropImage(r.dataUrl, p.slice(0, 24));
+      inp.value = '';
+    } catch (e) {
+      msg.textContent = /no_image_keys/.test(String(e.detail || '')) ? 'The picture engines aren\u2019t connected yet.' : 'Couldn\u2019t paint that just now. Try again in a moment.';
+    }
+    btn.disabled = false; btn.textContent = 'Create with AI';
+  });
+  document.addEventListener('visibilitychange', function () { /* the animation loop pauses itself while hidden */ });
+}
+
+
 function setOrbState(state) {
   const orb = document.getElementById('orbBtn');
   orb.classList.remove('idle', 'listening', 'thinking', 'speaking');
@@ -935,7 +1514,7 @@ function toggleMic() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { addSystemNote('Voice input needs Chrome, buddy.'); return; }
   recognition = new SR();
-  recognition.lang = 'en-US';
+  recognition.lang = listenLangCode();
   recognition.continuous = true;
   recognition.interimResults = true;
   let finalText = '';
@@ -2572,7 +3151,7 @@ async function generateSpec(kind, text, o) {
   let live = '';
   if (kind !== 'xlsx') { try { live = await liveContext(topicOf(o.topic || text), { force: true }); } catch (e) {} }
   const sys = kind === 'pptx' ? PPT_SYSTEM : (kind === 'docx' ? DOCX_SYSTEM : XLSX_SYSTEM);
-  const msgs = [{ role: 'system', content: sys }].concat(o.recent || [], [{ role: 'user', content: text + live + (o.ctx || '') }]);
+  const msgs = [{ role: 'system', content: sys }].concat(o.recent || [], [{ role: 'user', content: text + languageNote() + live + (o.ctx || '') }]);
   const spec = parseJsonLoose(await askAI(msgs, { create: true }));
   if (kind === 'pptx') {
     const d = normDeck(spec);
@@ -3242,6 +3821,7 @@ function setLook(name) {
   document.documentElement.setAttribute('data-look', name);
   try { localStorage.setItem('chaturvedi_look', name); } catch (e) {}
   updateLookSwatches();
+  if (typeof applyBackdrop === 'function') setTimeout(applyBackdrop, 60);
 }
 function updateLookSwatches() {
   document.querySelectorAll('.look-swatch').forEach(function (btn) {
@@ -3330,6 +3910,8 @@ async function boot() {
   updateLookSwatches();
 
   initKriti();
+  initVoicePanel();
+  initBackdrop();
   loadChats();
   migrateOldHistory();
   showHome();
@@ -3384,7 +3966,7 @@ document.getElementById('moreBtn').addEventListener('click', function (e) {
   if (document.getElementById('menuPanel').hidden) openMenu(); else closeMenu();
 });
 document.getElementById('overlay').addEventListener('click', function () {
-  closeMenu(); closeAbout(); closePersonalize();
+  closeMenu(); closeAbout(); closePersonalize(); closeVoicePanel(); closeBackdropPanel();
 });
 document.getElementById('newChatItem').addEventListener('click', newChat);
 document.getElementById('exportItem').addEventListener('click', exportChat);
